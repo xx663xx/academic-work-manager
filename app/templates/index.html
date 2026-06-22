@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Academic Work Manager{% endblock %}
+
+{% block content %}
+  <section class="intro">
+    <h1>Назначение тем студентам</h1>
+    <p>
+      Минимальный каркас FastAPI-приложения запущен. На следующих этапах здесь
+      появятся импорт данных, роли, назначение руководителя и Excel-выгрузка.
+    </p>
+  </section>
+
+  <section class="grid">
+    <article>
+      <h2>Роли MVP</h2>
+      <ul>
+        {% for role in roles %}
+          <li>{{ role }}</li>
+        {% endfor %}
+      </ul>
+    </article>
+
+    <article>
+      <h2>Следующие шаги</h2>
+      <ol>
+        {% for step in next_steps %}
+          <li>{{ step }}</li>
+        {% endfor %}
+      </ol>
+    </article>
+  </section>
+{% endblock %}
