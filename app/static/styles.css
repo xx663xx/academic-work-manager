@@ -57,6 +57,12 @@ p {
   gap: 16px;
 }
 
+.role-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
 article {
   border: 1px solid #d9dee7;
   border-radius: 8px;
@@ -64,12 +70,22 @@ article {
   padding: 20px;
 }
 
+.button {
+  display: inline-block;
+  border-radius: 6px;
+  background: #2563eb;
+  color: #ffffff;
+  padding: 10px 14px;
+  text-decoration: none;
+}
+
 li + li {
   margin-top: 8px;
 }
 
 @media (max-width: 720px) {
-  .grid {
+  .grid,
+  .role-grid {
     grid-template-columns: 1fr;
   }
 }

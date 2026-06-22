@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Выбор роли - Academic Work Manager{% endblock %}
+
+{% block content %}
+  <section class="intro">
+    <h1>Выбор роли</h1>
+    <p>
+      Пока это простой вход без пароля. На следующих этапах выбранная роль будет
+      определять доступные действия в приложении.
+    </p>
+  </section>
+
+  <section class="role-grid">
+    {% for role in roles %}
+      <article>
+        <h2>{{ role.title }}</h2>
+        <p>{{ role.description }}</p>
+        <a class="button" href="/?role={{ role.key }}">Выбрать</a>
+      </article>
+    {% endfor %}
+  </section>
+{% endblock %}
