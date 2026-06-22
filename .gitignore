@@ -1,0 +1,66 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Build and packaging artifacts
+build/
+dist/
+*.egg-info/
+
+# SQLite databases and runtime state
+*.db
+*.sqlite
+*.sqlite3
+instance/
+
+# Generated exports and temporary outputs
+exports/
+output/
+outputs/
+tmp/
+temp/
+
+# Uploaded/imported local working files
+uploads/
+
+# Internal planning and memory files
+AGENTS.md
+inside-docs/
+docs/
+Memory/
+council-report-*.html
+council-transcript-*.md
+
+# Logs
+*.log
+logs/
+
+# IDE/editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Excel temporary lock files
+~$*.xlsx
+~$*.xls
