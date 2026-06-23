@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Academic Work Manager{% endblock %}
+
+{% block content %}
+  <section class="intro">
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+    <p>
+      <a class="button secondary" href="{{ back_url }}">Назад</a>
+    </p>
+  </section>
+
+  {% if rows %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            {% for key, label in columns %}
+              <th>{{ label }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              {% for key, label in columns %}
+                <td>{{ row[key] or "—" }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <article>
+      <h2>Нет данных</h2>
+      <p>{{ empty_message }}</p>
+    </article>
+  {% endif %}
+{% endblock %}

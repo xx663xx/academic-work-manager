@@ -4,6 +4,8 @@ from fastapi import FastAPI, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
+from app.database import get_students, get_teachers, init_db
+
 
 BASE_DIR = Path(__file__).resolve().parent
 
@@ -36,37 +38,37 @@ DASHBOARDS = {
         "title": "Панель администратора",
         "description": "Администратор имеет полный доступ к данным, настройкам и всем назначениям.",
         "actions": [
-            "Импорт студентов",
-            "Импорт преподавателей",
-            "Просмотр всех тем",
-            "Просмотр студентов",
-            "Просмотр преподавателей",
-            "Управление назначениями",
-            "Изменение темы или руководителя",
-            "Настройка сроков и блокировок",
-            "Экспорт результата в Excel",
+            {"label": "Импорт студентов"},
+            {"label": "Импорт преподавателей"},
+            {"label": "Просмотр студентов", "url": "/admin/students"},
+            {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
+            {"label": "Просмотр всех тем"},
+            {"label": "Управление назначениями"},
+            {"label": "Изменение темы или руководителя"},
+            {"label": "Настройка сроков и блокировок"},
+            {"label": "Экспорт результата в Excel"},
         ],
     },
     "teacher": {
         "title": "Панель преподавателя",
         "description": "Преподаватель вносит темы и подтверждает или отклоняет заявки студентов.",
         "actions": [
-            "Добавление темы",
-            "Редактирование своей темы",
-            "Просмотр тем преподавателя",
-            "Просмотр заявок студентов",
-            "Подтверждение темы",
-            "Отказ по заявке студента",
+            {"label": "Добавление темы"},
+            {"label": "Редактирование своей темы"},
+            {"label": "Просмотр тем преподавателя"},
+            {"label": "Просмотр заявок студентов"},
+            {"label": "Подтверждение темы"},
+            {"label": "Отказ по заявке студента"},
         ],
     },
     "student": {
         "title": "Панель студента",
         "description": "Студент выбирает доступную тему и отслеживает статус согласования.",
         "actions": [
-            "Просмотр доступных тем",
-            "Выбор темы до подтверждения",
-            "Просмотр своей темы и руководителя",
-            "Просмотр статуса согласования",
+            {"label": "Просмотр доступных тем"},
+            {"label": "Выбор темы до подтверждения"},
+            {"label": "Просмотр своей темы и руководителя"},
+            {"label": "Просмотр статуса согласования"},
         ],
     },
 }
@@ -115,6 +117,53 @@ def render_dashboard(request: Request, role_key: str):
 @app.get("/admin")
 async def admin_dashboard(request: Request):
     return render_dashboard(request, "admin")
+
+
+@app.get("/admin/students")
+async def admin_students(request: Request):
+    init_db()
+    return templates.TemplateResponse(
+        request,
+        "reference_list.html",
+        {
+            "title": "Студенты",
+            "description": "Справочник студентов, загруженных для распределения тем.",
+            "empty_message": "Студенты еще не загружены.",
+            "columns": [
+                ("full_name", "ФИО"),
+                ("study_group", "Группа"),
+                ("course", "Курс"),
+                ("login", "Логин"),
+                ("contact", "Контакт"),
+            ],
+            "rows": get_students(),
+            "back_url": "/admin",
+        },
+    )
+
+
+@app.get("/admin/teachers")
+async def admin_teachers(request: Request):
+    init_db()
+    return templates.TemplateResponse(
+        request,
+        "reference_list.html",
+        {
+            "title": "Преподаватели",
+            "description": "Справочник преподавателей, которые могут предлагать темы.",
+            "empty_message": "Преподаватели еще не загружены.",
+            "columns": [
+                ("full_name", "ФИО"),
+                ("position", "Должность"),
+                ("academic_degree", "Ученая степень"),
+                ("academic_title", "Ученое звание"),
+                ("specialization", "Направление"),
+                ("contact", "Контакт"),
+            ],
+            "rows": get_teachers(),
+            "back_url": "/admin",
+        },
+    )
 
 
 @app.get("/teacher")
