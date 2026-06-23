@@ -1,5 +1,5 @@
 ifeq ($(OS),Windows_NT)
-PYTHON ?= python
+PYTHON ?= py -3
 VENV_PYTHON := .venv/Scripts/python.exe
 else
 PYTHON ?= python3
