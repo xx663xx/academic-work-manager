@@ -1,5 +1,5 @@
 ifeq ($(OS),Windows_NT)
-PYTHON ?= py -3
+PYTHON ?= python
 VENV_PYTHON := .venv/Scripts/python.exe
 else
 PYTHON ?= python3
@@ -8,9 +8,11 @@ endif
 
 .PHONY: setup run
 
-setup:
-	$(PYTHON) -m venv .venv
+setup: $(VENV_PYTHON)
 	$(VENV_PYTHON) -m pip install -r requirements.txt
+
+$(VENV_PYTHON):
+	$(PYTHON) -m venv .venv
 
 run:
 	$(VENV_PYTHON) -m uvicorn app.main:app
