@@ -1,8 +1,16 @@
+ifeq ($(OS),Windows_NT)
+PYTHON ?= python
+VENV_PYTHON := .venv/Scripts/python.exe
+else
+PYTHON ?= python3
+VENV_PYTHON := .venv/bin/python
+endif
+
 .PHONY: setup run
 
 setup:
-	python3 -m venv .venv
-	.venv/bin/pip install -r requirements.txt
+	$(PYTHON) -m venv .venv
+	$(VENV_PYTHON) -m pip install -r requirements.txt
 
 run:
-	.venv/bin/uvicorn app.main:app
+	$(VENV_PYTHON) -m uvicorn app.main:app
