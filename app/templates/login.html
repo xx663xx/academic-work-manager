@@ -16,7 +16,7 @@
       <article>
         <h2>{{ role.title }}</h2>
         <p>{{ role.description }}</p>
-        <a class="button" href="/?role={{ role.key }}">Выбрать</a>
+        <a class="button" href="/{{ role.key }}">Выбрать</a>
       </article>
     {% endfor %}
   </section>

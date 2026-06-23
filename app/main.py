@@ -31,6 +31,46 @@ ROLES = [
     },
 ]
 
+DASHBOARDS = {
+    "admin": {
+        "title": "Панель администратора",
+        "description": "Администратор имеет полный доступ к данным, настройкам и всем назначениям.",
+        "actions": [
+            "Импорт студентов",
+            "Импорт преподавателей",
+            "Просмотр всех тем",
+            "Просмотр студентов",
+            "Просмотр преподавателей",
+            "Управление назначениями",
+            "Изменение темы или руководителя",
+            "Настройка сроков и блокировок",
+            "Экспорт результата в Excel",
+        ],
+    },
+    "teacher": {
+        "title": "Панель преподавателя",
+        "description": "Преподаватель вносит темы и подтверждает или отклоняет заявки студентов.",
+        "actions": [
+            "Добавление темы",
+            "Редактирование своей темы",
+            "Просмотр тем преподавателя",
+            "Просмотр заявок студентов",
+            "Подтверждение темы",
+            "Отказ по заявке студента",
+        ],
+    },
+    "student": {
+        "title": "Панель студента",
+        "description": "Студент выбирает доступную тему и отслеживает статус согласования.",
+        "actions": [
+            "Просмотр доступных тем",
+            "Выбор темы до подтверждения",
+            "Просмотр своей темы и руководителя",
+            "Просмотр статуса согласования",
+        ],
+    },
+}
+
 
 @app.get("/")
 async def index(request: Request):
@@ -58,3 +98,30 @@ async def login(request: Request):
             "roles": ROLES,
         },
     )
+
+
+def render_dashboard(request: Request, role_key: str):
+    dashboard = DASHBOARDS[role_key]
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "dashboard": dashboard,
+            "roles": [role["title"] for role in ROLES],
+        },
+    )
+
+
+@app.get("/admin")
+async def admin_dashboard(request: Request):
+    return render_dashboard(request, "admin")
+
+
+@app.get("/teacher")
+async def teacher_dashboard(request: Request):
+    return render_dashboard(request, "teacher")
+
+
+@app.get("/student")
+async def student_dashboard(request: Request):
+    return render_dashboard(request, "student")
