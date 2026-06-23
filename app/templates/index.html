@@ -3,34 +3,63 @@
 {% block title %}Главная - Academic Work Manager{% endblock %}
 
 {% block content %}
-  <section class="intro">
-    <h1>Назначение тем студентам</h1>
-    <p>
-      Минимальный каркас FastAPI-приложения запущен. На следующих этапах здесь
-      появятся импорт данных, роли, назначение руководителя и Excel-выгрузка.
-    </p>
-    <p>
-      <a class="button" href="/login">Перейти к выбору роли</a>
-    </p>
-  </section>
+  {% if dashboard %}
+    <section class="intro">
+      <h1>{{ dashboard.title }}</h1>
+      <p>{{ dashboard.description }}</p>
+      <p>
+        <a class="button secondary" href="/login">Сменить роль</a>
+      </p>
+    </section>
 
-  <section class="grid">
-    <article>
-      <h2>Роли MVP</h2>
-      <ul>
-        {% for role in roles %}
-          <li>{{ role }}</li>
-        {% endfor %}
-      </ul>
-    </article>
+    <section class="grid">
+      <article>
+        <h2>Доступные действия</h2>
+        <ul>
+          {% for action in dashboard.actions %}
+            <li>{{ action }}</li>
+          {% endfor %}
+        </ul>
+      </article>
 
-    <article>
-      <h2>Следующие шаги</h2>
-      <ol>
-        {% for step in next_steps %}
-          <li>{{ step }}</li>
-        {% endfor %}
-      </ol>
-    </article>
-  </section>
+      <article>
+        <h2>Статус раздела</h2>
+        <p>
+          Это первый экран роли. На следующих этапах действия будут связаны с
+          базой данных, импортом, назначениями и экспортом.
+        </p>
+      </article>
+    </section>
+  {% else %}
+    <section class="intro">
+      <h1>Назначение тем студентам</h1>
+      <p>
+        Минимальный каркас FastAPI-приложения запущен. На следующих этапах здесь
+        появятся импорт данных, роли, назначение руководителя и Excel-выгрузка.
+      </p>
+      <p>
+        <a class="button" href="/login">Перейти к выбору роли</a>
+      </p>
+    </section>
+
+    <section class="grid">
+      <article>
+        <h2>Роли MVP</h2>
+        <ul>
+          {% for role in roles %}
+            <li>{{ role }}</li>
+          {% endfor %}
+        </ul>
+      </article>
+
+      <article>
+        <h2>Следующие шаги</h2>
+        <ol>
+          {% for step in next_steps %}
+            <li>{{ step }}</li>
+          {% endfor %}
+        </ol>
+      </article>
+    </section>
+  {% endif %}
 {% endblock %}

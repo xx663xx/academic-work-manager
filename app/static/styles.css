@@ -79,6 +79,12 @@ article {
   text-decoration: none;
 }
 
+.button.secondary {
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #1f2937;
+}
+
 li + li {
   margin-top: 8px;
 }
