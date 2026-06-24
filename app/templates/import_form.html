@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Academic Work Manager{% endblock %}
+
+{% block content %}
+  <section class="intro">
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+    <p>
+      <a class="button secondary" href="{{ back_url }}">Назад</a>
+    </p>
+  </section>
+
+  <section class="grid">
+    <article>
+      <h2>Файл Excel</h2>
+      <form class="upload-form" method="post" enctype="multipart/form-data">
+        <label for="file">Выберите .xlsx файл</label>
+        <input id="file" name="file" type="file" accept=".xlsx" disabled>
+        <button class="button" type="button" disabled>Загрузить</button>
+      </form>
+      <p class="muted">
+        Обработка файла будет подключена после интеграции Excel-импорта.
+      </p>
+    </article>
+
+    <article>
+      <h2>Ожидаемые колонки</h2>
+      <ul>
+        {% for column in columns %}
+          <li>{{ column }}</li>
+        {% endfor %}
+      </ul>
+      <p class="muted">Тестовый файл: {{ sample_path }}</p>
+      <p>{{ note }}</p>
+    </article>
+  </section>
+{% endblock %}

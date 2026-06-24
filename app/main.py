@@ -38,8 +38,8 @@ DASHBOARDS = {
         "title": "Панель администратора",
         "description": "Администратор имеет полный доступ к данным, настройкам и всем назначениям.",
         "actions": [
-            {"label": "Импорт студентов"},
-            {"label": "Импорт преподавателей"},
+            {"label": "Импорт студентов", "url": "/admin/import/students"},
+            {"label": "Импорт преподавателей", "url": "/admin/import/teachers"},
             {"label": "Просмотр студентов", "url": "/admin/students"},
             {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
             {"label": "Просмотр всех тем"},
@@ -161,6 +161,44 @@ async def admin_teachers(request: Request):
                 ("contact", "Контакт"),
             ],
             "rows": get_teachers(),
+            "back_url": "/admin",
+        },
+    )
+
+
+@app.get("/admin/import/students")
+async def admin_import_students(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "import_form.html",
+        {
+            "title": "Импорт студентов",
+            "description": "Загрузка справочника студентов из Excel-файла.",
+            "columns": ["ФИО", "Группа", "Курс", "Логин", "Контакт"],
+            "sample_path": "samples/students.xlsx",
+            "back_url": "/admin",
+        },
+    )
+
+
+@app.get("/admin/import/teachers")
+async def admin_import_teachers(request: Request):
+    return templates.TemplateResponse(
+        request,
+        "import_form.html",
+        {
+            "title": "Импорт преподавателей",
+            "description": "Загрузка справочника преподавателей из Excel-файла.",
+            "columns": [
+                "ФИО",
+                "Должность",
+                "Ученая степень",
+                "Ученое звание",
+                "Направление",
+                "Контакт",
+            ],
+            "sample_path": "samples/teachers.xlsx",
+            "note": "Ученая степень и ученое звание могут быть пустыми. Должность и ФИО обязательны.",
             "back_url": "/admin",
         },
     )
