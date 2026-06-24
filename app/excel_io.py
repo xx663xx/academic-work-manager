@@ -19,7 +19,7 @@ TEACHER_COLUMNS = [
 def read_rows(file_path, required_columns):
     workbook = load_workbook(file_path)
     sheet = workbook.active
-    headers = [cell.value for cell in sheet[2]]
+    headers = [clean_text(cell.value) for cell in sheet[2]]
     missing_columns = [column for column in required_columns if column not in headers]
 
     if missing_columns:
@@ -32,6 +32,9 @@ def read_rows(file_path, required_columns):
             continue
         row_data = dict(zip(headers, row))
         rows.append({column: row_data.get(column) for column in required_columns})
+
+    if not rows:
+        raise ValueError("Файл не содержит строк с данными")
 
     return rows
 
@@ -55,7 +58,7 @@ def import_students_from_excel(file_path, db_path=DB_PATH):
                 (
                     clean_text(row["ФИО"]),
                     clean_text(row["Группа"]),
-                    int(row["Курс"]),
+                    normalize_course(row["Курс"]),
                     clean_text(row["Логин"]),
                     clean_text(row["Контакт"]),
                 ),
@@ -103,7 +106,10 @@ def import_teachers_from_excel(file_path, db_path=DB_PATH):
 
 
 def export_assignments_to_excel(file_path, db_path=DB_PATH):
+    init_db(db_path)
     rows = get_assignments_for_export(db_path)
+    if not rows:
+        raise ValueError("Нет назначений для выгрузки")
 
     workbook = Workbook()
     sheet = workbook.active
@@ -144,13 +150,14 @@ def validate_students(rows):
     for index, row in enumerate(rows, start=3):
         full_name = clean_text(row["ФИО"])
         group = clean_text(row["Группа"])
-        course = row["Курс"]
 
         if not full_name:
             raise ValueError(f"Строка {index}: не заполнено ФИО студента")
         if not group:
             raise ValueError(f"Строка {index}: не заполнена группа")
-        if course not in (3, 4):
+        try:
+            normalize_course(row["Курс"])
+        except ValueError:
             raise ValueError(f"Строка {index}: курс должен быть 3 или 4")
 
         student_key = (full_name, group)
@@ -179,3 +186,23 @@ def clean_text(value):
     if value is None:
         return ""
     return str(value).strip()
+
+
+def normalize_course(value):
+    course_text = clean_text(value)
+    if not course_text:
+        raise ValueError
+
+    try:
+        course_value = float(course_text)
+    except ValueError:
+        raise ValueError
+
+    if not course_value.is_integer():
+        raise ValueError
+
+    course = int(course_value)
+    if course not in (3, 4):
+        raise ValueError
+
+    return course
