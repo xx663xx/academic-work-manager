@@ -17,7 +17,13 @@
         <h2>Доступные действия</h2>
         <ul>
           {% for action in dashboard.actions %}
-            <li>{{ action }}</li>
+            <li>
+              {% if action.url %}
+                <a class="action-link" href="{{ action.url }}">{{ action.label }}</a>
+              {% else %}
+                {{ action.label }}
+              {% endif %}
+            </li>
           {% endfor %}
         </ul>
       </article>
