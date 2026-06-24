@@ -14,14 +14,20 @@
   <section class="grid">
     <article>
       <h2>Файл Excel</h2>
+      {% if success_message %}
+        <p class="message success">{{ success_message }}</p>
+      {% endif %}
+      {% if error_message %}
+        <p class="message error">{{ error_message }}</p>
+      {% endif %}
       <form class="upload-form" method="post" enctype="multipart/form-data">
         <label for="file">Выберите .xlsx файл</label>
-        <input id="file" name="file" type="file" accept=".xlsx" disabled>
-        <button class="button" type="button" disabled>Загрузить</button>
+        <input id="file" name="file" type="file" accept=".xlsx" required>
+        <button class="button" type="submit">Загрузить</button>
       </form>
-      <p class="muted">
-        Обработка файла будет подключена после интеграции Excel-импорта.
-      </p>
+      {% if result_url %}
+        <p><a class="button secondary" href="{{ result_url }}">Открыть справочник</a></p>
+      {% endif %}
     </article>
 
     <article>
@@ -32,7 +38,9 @@
         {% endfor %}
       </ul>
       <p class="muted">Тестовый файл: {{ sample_path }}</p>
-      <p>{{ note }}</p>
+      {% if note %}
+        <p>{{ note }}</p>
+      {% endif %}
     </article>
   </section>
 {% endblock %}

@@ -1,10 +1,12 @@
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, File, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from app.database import get_students, get_teachers, init_db
+from app.excel_io import import_students_from_excel, import_teachers_from_excel
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -114,6 +116,43 @@ def render_dashboard(request: Request, role_key: str):
     )
 
 
+def render_import_form(
+    request: Request,
+    *,
+    title: str,
+    description: str,
+    columns: list[str],
+    sample_path: str,
+    back_url: str,
+    note: str = "",
+    success_message: str = "",
+    error_message: str = "",
+    result_url: str = "",
+):
+    return templates.TemplateResponse(
+        request,
+        "import_form.html",
+        {
+            "title": title,
+            "description": description,
+            "columns": columns,
+            "sample_path": sample_path,
+            "back_url": back_url,
+            "note": note,
+            "success_message": success_message,
+            "error_message": error_message,
+            "result_url": result_url,
+        },
+    )
+
+
+async def save_upload_to_temp_file(file: UploadFile) -> Path:
+    suffix = Path(file.filename or "").suffix
+    with NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
+        temp_file.write(await file.read())
+        return Path(temp_file.name)
+
+
 @app.get("/admin")
 async def admin_dashboard(request: Request):
     return render_dashboard(request, "admin")
@@ -168,39 +207,128 @@ async def admin_teachers(request: Request):
 
 @app.get("/admin/import/students")
 async def admin_import_students(request: Request):
-    return templates.TemplateResponse(
+    return render_import_form(
         request,
-        "import_form.html",
-        {
-            "title": "Импорт студентов",
-            "description": "Загрузка справочника студентов из Excel-файла.",
-            "columns": ["ФИО", "Группа", "Курс", "Логин", "Контакт"],
-            "sample_path": "samples/students.xlsx",
-            "back_url": "/admin",
-        },
+        title="Импорт студентов",
+        description="Загрузка справочника студентов из Excel-файла.",
+        columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
+        sample_path="samples/students.xlsx",
+        back_url="/admin",
+    )
+
+
+@app.post("/admin/import/students")
+async def admin_import_students_submit(request: Request, file: UploadFile = File(...)):
+    if not file.filename or not file.filename.endswith(".xlsx"):
+        return render_import_form(
+            request,
+            title="Импорт студентов",
+            description="Загрузка справочника студентов из Excel-файла.",
+            columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
+            sample_path="samples/students.xlsx",
+            back_url="/admin",
+            error_message="Выберите файл в формате .xlsx.",
+        )
+
+    temp_path = await save_upload_to_temp_file(file)
+    try:
+        imported_count = import_students_from_excel(temp_path)
+    except ValueError as error:
+        return render_import_form(
+            request,
+            title="Импорт студентов",
+            description="Загрузка справочника студентов из Excel-файла.",
+            columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
+            sample_path="samples/students.xlsx",
+            back_url="/admin",
+            error_message=str(error),
+        )
+    finally:
+        temp_path.unlink(missing_ok=True)
+
+    return render_import_form(
+        request,
+        title="Импорт студентов",
+        description="Загрузка справочника студентов из Excel-файла.",
+        columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
+        sample_path="samples/students.xlsx",
+        back_url="/admin",
+        success_message=f"Загружено студентов: {imported_count}.",
+        result_url="/admin/students",
     )
 
 
 @app.get("/admin/import/teachers")
 async def admin_import_teachers(request: Request):
-    return templates.TemplateResponse(
+    return render_import_form(
         request,
-        "import_form.html",
-        {
-            "title": "Импорт преподавателей",
-            "description": "Загрузка справочника преподавателей из Excel-файла.",
-            "columns": [
-                "ФИО",
-                "Должность",
-                "Ученая степень",
-                "Ученое звание",
-                "Направление",
-                "Контакт",
-            ],
-            "sample_path": "samples/teachers.xlsx",
-            "note": "Ученая степень и ученое звание могут быть пустыми. Должность и ФИО обязательны.",
-            "back_url": "/admin",
-        },
+        title="Импорт преподавателей",
+        description="Загрузка справочника преподавателей из Excel-файла.",
+        columns=[
+            "ФИО",
+            "Должность",
+            "Ученая степень",
+            "Ученое звание",
+            "Направление",
+            "Контакт",
+        ],
+        sample_path="samples/teachers.xlsx",
+        note="Ученая степень и ученое звание могут быть пустыми. Должность и ФИО обязательны.",
+        back_url="/admin",
+    )
+
+
+@app.post("/admin/import/teachers")
+async def admin_import_teachers_submit(request: Request, file: UploadFile = File(...)):
+    columns = [
+        "ФИО",
+        "Должность",
+        "Ученая степень",
+        "Ученое звание",
+        "Направление",
+        "Контакт",
+    ]
+    note = "Ученая степень и ученое звание могут быть пустыми. Должность и ФИО обязательны."
+
+    if not file.filename or not file.filename.endswith(".xlsx"):
+        return render_import_form(
+            request,
+            title="Импорт преподавателей",
+            description="Загрузка справочника преподавателей из Excel-файла.",
+            columns=columns,
+            sample_path="samples/teachers.xlsx",
+            note=note,
+            back_url="/admin",
+            error_message="Выберите файл в формате .xlsx.",
+        )
+
+    temp_path = await save_upload_to_temp_file(file)
+    try:
+        imported_count = import_teachers_from_excel(temp_path)
+    except ValueError as error:
+        return render_import_form(
+            request,
+            title="Импорт преподавателей",
+            description="Загрузка справочника преподавателей из Excel-файла.",
+            columns=columns,
+            sample_path="samples/teachers.xlsx",
+            note=note,
+            back_url="/admin",
+            error_message=str(error),
+        )
+    finally:
+        temp_path.unlink(missing_ok=True)
+
+    return render_import_form(
+        request,
+        title="Импорт преподавателей",
+        description="Загрузка справочника преподавателей из Excel-файла.",
+        columns=columns,
+        sample_path="samples/teachers.xlsx",
+        note=note,
+        back_url="/admin",
+        success_message=f"Загружено преподавателей: {imported_count}.",
+        result_url="/admin/teachers",
     )
 
 
