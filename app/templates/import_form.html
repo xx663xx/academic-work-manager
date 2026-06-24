@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Academic Work Manager{% endblock %}
+
+{% block content %}
+  <section class="intro">
+    <h1>{{ title }}</h1>
+    <p>{{ description }}</p>
+    <p>
+      <a class="button secondary" href="{{ back_url }}">Назад</a>
+    </p>
+  </section>
+
+  <section class="grid">
+    <article>
+      <h2>Файл Excel</h2>
+      {% if success_message %}
+        <p class="message success">{{ success_message }}</p>
+      {% endif %}
+      {% if error_message %}
+        <p class="message error">{{ error_message }}</p>
+      {% endif %}
+      <form class="upload-form" method="post" enctype="multipart/form-data">
+        <label for="file">Выберите .xlsx файл</label>
+        <input id="file" name="file" type="file" accept=".xlsx" required>
+        <button class="button" type="submit">Загрузить</button>
+      </form>
+      {% if result_url %}
+        <p><a class="button secondary" href="{{ result_url }}">Открыть справочник</a></p>
+      {% endif %}
+    </article>
+
+    <article>
+      <h2>Ожидаемые колонки</h2>
+      <ul>
+        {% for column in columns %}
+          <li>{{ column }}</li>
+        {% endfor %}
+      </ul>
+      <p class="muted">Тестовый файл: {{ sample_path }}</p>
+      {% if note %}
+        <p>{{ note }}</p>
+      {% endif %}
+    </article>
+  </section>
+{% endblock %}
