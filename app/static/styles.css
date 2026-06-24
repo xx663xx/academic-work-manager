@@ -51,6 +51,11 @@ p {
   line-height: 1.5;
 }
 
+.muted {
+  color: #64748b;
+  font-size: 14px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -83,6 +88,47 @@ article {
   border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #1f2937;
+}
+
+.button:disabled {
+  background: #cbd5e1;
+  color: #475569;
+  cursor: not-allowed;
+}
+
+.upload-form {
+  display: grid;
+  gap: 12px;
+  max-width: 420px;
+}
+
+.upload-form label {
+  font-weight: 700;
+}
+
+.upload-form input {
+  width: 100%;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: #f8fafc;
+  padding: 10px;
+}
+
+.message {
+  border-radius: 6px;
+  padding: 10px 12px;
+}
+
+.message.success {
+  border: 1px solid #86efac;
+  background: #f0fdf4;
+  color: #166534;
+}
+
+.message.error {
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #991b1b;
 }
 
 .action-link {
