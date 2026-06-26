@@ -3,7 +3,81 @@
 {% block title %}Главная - Academic Work Manager{% endblock %}
 
 {% block content %}
-  {% if dashboard %}
+  {% if assignment_form %}
+    <section class="intro">
+      <h1>Назначение темы</h1>
+      <p>Первый экран администратора для выбора студента, типа работы, темы и руководителя.</p>
+      <p>
+        <a class="button secondary" href="/admin">Назад</a>
+      </p>
+    </section>
+
+    <section class="grid">
+      <article>
+        <h2>Студент и тип работы</h2>
+        <form class="assignment-form" method="get">
+          <div class="field">
+            <label for="student_id">Студент</label>
+            <select id="student_id" name="student_id" onchange="this.form.submit()">
+              <option value="">Выберите студента</option>
+              {% for student in assignment_form.students %}
+                <option
+                  value="{{ student.id }}"
+                  {% if assignment_form.selected_student and assignment_form.selected_student.id == student.id %}selected{% endif %}
+                >
+                  {{ student.full_name }} ({{ student.study_group }}, {{ student.course }} курс)
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
+
+        <div class="field">
+          <label for="work_type">Тип работы</label>
+          {% if assignment_form.work_types|length > 1 %}
+            <select id="work_type" name="work_type" form="assignment-details-form">
+              {% for work_type in assignment_form.work_types %}
+                <option value="{{ work_type }}">{{ work_type }}</option>
+              {% endfor %}
+            </select>
+          {% elif assignment_form.work_types %}
+            <input
+              id="work_type"
+              name="work_type"
+              form="assignment-details-form"
+              type="text"
+              value="{{ assignment_form.work_types[0] }}"
+              readonly
+            >
+          {% else %}
+            <input id="work_type" type="text" value="Выберите студента" readonly>
+          {% endif %}
+        </div>
+      </article>
+
+      <article>
+        <h2>Данные назначения</h2>
+        <form id="assignment-details-form" class="assignment-form">
+          <div class="field">
+            <label for="topic_title">Тема работы</label>
+            <textarea id="topic_title" name="topic_title" rows="4" placeholder="Введите тему работы"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="teacher_id">Руководитель</label>
+            <select id="teacher_id" name="teacher_id">
+              <option value="">Выберите преподавателя</option>
+              {% for teacher in assignment_form.teachers %}
+                <option value="{{ teacher.id }}">{{ teacher.full_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button class="button" type="button" disabled>Сохранение будет добавлено следующим шагом</button>
+        </form>
+      </article>
+    </section>
+  {% elif dashboard %}
     <section class="intro">
       <h1>{{ dashboard.title }}</h1>
       <p>{{ dashboard.description }}</p>

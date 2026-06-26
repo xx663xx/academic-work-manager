@@ -102,16 +102,38 @@ article {
   max-width: 420px;
 }
 
+.assignment-form {
+  display: grid;
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  gap: 6px;
+}
+
 .upload-form label {
   font-weight: 700;
 }
 
-.upload-form input {
+.assignment-form label {
+  font-weight: 700;
+}
+
+.upload-form input,
+.assignment-form input,
+.assignment-form select,
+.assignment-form textarea {
   width: 100%;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   background: #f8fafc;
   padding: 10px;
+  font: inherit;
+}
+
+.assignment-form textarea {
+  resize: vertical;
 }
 
 .message {
