@@ -25,7 +25,7 @@
                   value="{{ student.id }}"
                   {% if assignment_form.selected_student and assignment_form.selected_student.id == student.id %}selected{% endif %}
                 >
-                  {{ student.full_name }} — {{ student.study_group }}, {{ student.course }} курс
+                  {{ student.full_name }} ({{ student.study_group }}, {{ student.course }} курс)
                 </option>
               {% endfor %}
             </select>
