@@ -147,12 +147,12 @@ def render_import_form(
     )
 
 
-def get_work_type_for_course(course: int) -> str:
+def get_work_types_for_course(course: int) -> list[str]:
     if course == 3:
-        return "Курсовая работа"
+        return ["Курсовая работа"]
     if course == 4:
-        return "ВКР"
-    return "Не определено"
+        return ["ВКР", "ВКР/курсовая"]
+    return []
 
 
 async def save_upload_to_temp_file(file: UploadFile) -> Path:
@@ -226,10 +226,10 @@ async def admin_new_assignment(
         (student for student in students if student["id"] == student_id),
         None,
     )
-    work_type = (
-        get_work_type_for_course(selected_student["course"])
+    work_types = (
+        get_work_types_for_course(selected_student["course"])
         if selected_student
-        else "Выберите студента"
+        else []
     )
 
     return templates.TemplateResponse(
@@ -240,7 +240,7 @@ async def admin_new_assignment(
                 "students": students,
                 "teachers": teachers,
                 "selected_student": selected_student,
-                "work_type": work_type,
+                "work_types": work_types,
             },
             "roles": [role["title"] for role in ROLES],
         },

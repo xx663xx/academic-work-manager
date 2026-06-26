@@ -32,12 +32,32 @@
           </div>
         </form>
 
-        <p class="message success">Тип работы: {{ assignment_form.work_type }}</p>
+        <div class="field">
+          <label for="work_type">Тип работы</label>
+          {% if assignment_form.work_types|length > 1 %}
+            <select id="work_type" name="work_type" form="assignment-details-form">
+              {% for work_type in assignment_form.work_types %}
+                <option value="{{ work_type }}">{{ work_type }}</option>
+              {% endfor %}
+            </select>
+          {% elif assignment_form.work_types %}
+            <input
+              id="work_type"
+              name="work_type"
+              form="assignment-details-form"
+              type="text"
+              value="{{ assignment_form.work_types[0] }}"
+              readonly
+            >
+          {% else %}
+            <input id="work_type" type="text" value="Выберите студента" readonly>
+          {% endif %}
+        </div>
       </article>
 
       <article>
         <h2>Данные назначения</h2>
-        <form class="assignment-form">
+        <form id="assignment-details-form" class="assignment-form">
           <div class="field">
             <label for="topic_title">Тема работы</label>
             <textarea id="topic_title" name="topic_title" rows="4" placeholder="Введите тему работы"></textarea>

@@ -121,6 +121,7 @@ article {
 }
 
 .upload-form input,
+.assignment-form input,
 .assignment-form select,
 .assignment-form textarea {
   width: 100%;
