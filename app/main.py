@@ -1,7 +1,7 @@
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from fastapi import FastAPI, File, Request, UploadFile
+from fastapi import FastAPI, File, Query, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
@@ -44,6 +44,7 @@ DASHBOARDS = {
             {"label": "Импорт преподавателей", "url": "/admin/import/teachers"},
             {"label": "Просмотр студентов", "url": "/admin/students"},
             {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
+            {"label": "Назначить тему студенту", "url": "/admin/assignments/new"},
             {"label": "Просмотр всех тем"},
             {"label": "Управление назначениями"},
             {"label": "Изменение темы или руководителя"},
@@ -146,6 +147,14 @@ def render_import_form(
     )
 
 
+def get_work_type_for_course(course: int) -> str:
+    if course == 3:
+        return "Курсовая работа"
+    if course == 4:
+        return "ВКР"
+    return "Не определено"
+
+
 async def save_upload_to_temp_file(file: UploadFile) -> Path:
     suffix = Path(file.filename or "").suffix
     with NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
@@ -201,6 +210,39 @@ async def admin_teachers(request: Request):
             ],
             "rows": get_teachers(),
             "back_url": "/admin",
+        },
+    )
+
+
+@app.get("/admin/assignments/new")
+async def admin_new_assignment(
+    request: Request,
+    student_id: int | None = Query(default=None),
+):
+    init_db()
+    students = get_students()
+    teachers = get_teachers()
+    selected_student = next(
+        (student for student in students if student["id"] == student_id),
+        None,
+    )
+    work_type = (
+        get_work_type_for_course(selected_student["course"])
+        if selected_student
+        else "Выберите студента"
+    )
+
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "assignment_form": {
+                "students": students,
+                "teachers": teachers,
+                "selected_student": selected_student,
+                "work_type": work_type,
+            },
+            "roles": [role["title"] for role in ROLES],
         },
     )
 
