@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+:root {
+  --topbar-height: 72px;
+}
+
 body {
   margin: 0;
   color: #202124;
@@ -10,26 +14,86 @@ body {
 }
 
 .topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: var(--topbar-height);
   border-bottom: 1px solid #d9dee7;
   background: #ffffff;
-  padding: 16px 24px;
+  padding: 10px 24px;
 }
 
-.topbar div {
+.brand {
   display: flex;
   gap: 12px;
   align-items: baseline;
 }
 
-.topbar span {
+.brand strong {
+  white-space: nowrap;
+}
+
+.brand span {
   color: #667085;
   font-size: 14px;
+}
+
+.role-pill {
+  min-width: 160px;
+  border-radius: 999px;
+  background: #d8e6ff;
+  color: #2563eb;
+  font-weight: 700;
+  padding: 12px 24px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.admin-layout {
+  display: grid;
+  grid-template-columns: 260px minmax(0, 1fr);
+  min-height: calc(100vh - var(--topbar-height));
+}
+
+.admin-sidebar {
+  border-right: 1px solid #d9dee7;
+  background: #f8fafc;
+  padding: 64px 32px;
+}
+
+.admin-sidebar nav {
+  display: grid;
+  gap: 22px;
+}
+
+.admin-sidebar a,
+.admin-sidebar span {
+  display: block;
+  border-radius: 10px;
+  color: #71809d;
+  font-size: 18px;
+  padding: 14px 22px;
+  text-decoration: none;
+}
+
+.admin-sidebar a.active,
+.admin-sidebar span.active {
+  background: #d8e6ff;
+  color: #2563eb;
+  font-weight: 700;
 }
 
 .page {
   width: min(960px, 100%);
   margin: 0 auto;
   padding: 32px 24px;
+}
+
+.admin-page {
+  width: min(940px, 100%);
+  margin: 0;
+  padding: 56px 24px;
 }
 
 .intro {
@@ -107,6 +171,24 @@ article {
   gap: 14px;
 }
 
+.assignment-screen {
+  width: min(860px, 100%);
+}
+
+.assignment-screen h1 {
+  margin-bottom: 24px;
+  font-size: 34px;
+}
+
+.assignment-form-wide {
+  width: min(720px, 100%);
+  gap: 18px;
+}
+
+.assignment-form-wide + .assignment-form-wide {
+  margin-top: 20px;
+}
+
 .field {
   display: grid;
   gap: 6px;
@@ -118,6 +200,11 @@ article {
 
 .assignment-form label {
   font-weight: 700;
+}
+
+.assignment-form-wide label {
+  color: #71809d;
+  font-size: 16px;
 }
 
 .upload-form input,
@@ -132,8 +219,60 @@ article {
   font: inherit;
 }
 
+.assignment-form-wide input,
+.assignment-form-wide select,
+.assignment-form-wide textarea {
+  appearance: none;
+  -webkit-appearance: none;
+  border-radius: 8px;
+  background: #f8fafc;
+  min-height: 54px;
+  padding: 12px 18px;
+  color: #334155;
+  font-size: 18px;
+  line-height: 1.3;
+}
+
+.assignment-form-wide select {
+  background-image:
+    linear-gradient(45deg, transparent 50%, #475569 50%),
+    linear-gradient(135deg, #475569 50%, transparent 50%);
+  background-position:
+    calc(100% - 18px) 50%,
+    calc(100% - 12px) 50%;
+  background-repeat: no-repeat;
+  background-size: 6px 6px, 6px 6px;
+  padding-right: 36px;
+}
+
 .assignment-form textarea {
   resize: vertical;
+}
+
+.assignment-form-wide textarea {
+  min-height: 88px;
+}
+
+.assignment-footer {
+  display: grid;
+  grid-template-columns: minmax(280px, 420px) 176px;
+  gap: 30px;
+  align-items: end;
+}
+
+.save-button {
+  border: 0;
+  background: #079455;
+  min-height: 54px;
+  padding: 12px 24px;
+  font: inherit;
+  font-weight: 700;
+}
+
+.save-button:disabled {
+  background: #079455;
+  color: #ffffff;
+  opacity: 0.55;
 }
 
 .message {
@@ -204,6 +343,50 @@ li + li {
 }
 
 @media (max-width: 720px) {
+  .topbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .role-pill {
+    min-width: 0;
+  }
+
+  .admin-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid #d9dee7;
+    padding: 16px 24px;
+  }
+
+  .admin-sidebar nav {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+  }
+
+  .admin-sidebar a,
+  .admin-sidebar span {
+    flex: 0 0 auto;
+    font-size: 16px;
+    padding: 10px 14px;
+  }
+
+  .admin-page {
+    padding: 28px 24px;
+  }
+
+  .assignment-screen h1 {
+    font-size: 30px;
+  }
+
+  .assignment-footer {
+    grid-template-columns: 1fr;
+  }
+
   .grid,
   .role-grid {
     grid-template-columns: 1fr;

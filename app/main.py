@@ -76,6 +76,14 @@ DASHBOARDS = {
     },
 }
 
+ADMIN_NAVIGATION = [
+    {"key": "admin", "label": "Админ", "url": "/admin"},
+    {"key": "students", "label": "Студенты", "url": "/admin/students"},
+    {"key": "teachers", "label": "Преподаватели", "url": "/admin/teachers"},
+    {"key": "assignments", "label": "Назначения", "url": "/admin/assignments/new"},
+    {"key": "export", "label": "Экспорт"},
+]
+
 
 @app.get("/")
 async def index(request: Request):
@@ -107,14 +115,26 @@ async def login(request: Request):
 
 def render_dashboard(request: Request, role_key: str):
     dashboard = DASHBOARDS[role_key]
+    context = {
+        "dashboard": dashboard,
+        "roles": [role["title"] for role in ROLES],
+    }
+    if role_key == "admin":
+        context.update(get_admin_layout_context("admin"))
+
     return templates.TemplateResponse(
         request,
         "index.html",
-        {
-            "dashboard": dashboard,
-            "roles": [role["title"] for role in ROLES],
-        },
+        context,
     )
+
+
+def get_admin_layout_context(active_admin_nav: str) -> dict:
+    return {
+        "admin_section": True,
+        "admin_navigation": ADMIN_NAVIGATION,
+        "active_admin_nav": active_admin_nav,
+    }
 
 
 def render_import_form(
@@ -129,22 +149,23 @@ def render_import_form(
     success_message: str = "",
     error_message: str = "",
     result_url: str = "",
+    active_admin_nav: str = "",
 ):
-    return templates.TemplateResponse(
-        request,
-        "import_form.html",
-        {
-            "title": title,
-            "description": description,
-            "columns": columns,
-            "sample_path": sample_path,
-            "back_url": back_url,
-            "note": note,
-            "success_message": success_message,
-            "error_message": error_message,
-            "result_url": result_url,
-        },
-    )
+    context = {
+        "title": title,
+        "description": description,
+        "columns": columns,
+        "sample_path": sample_path,
+        "back_url": back_url,
+        "note": note,
+        "success_message": success_message,
+        "error_message": error_message,
+        "result_url": result_url,
+    }
+    if active_admin_nav:
+        context.update(get_admin_layout_context(active_admin_nav))
+
+    return templates.TemplateResponse(request, "import_form.html", context)
 
 
 def get_work_types_for_course(course: int) -> list[str]:
@@ -186,6 +207,7 @@ async def admin_students(request: Request):
             ],
             "rows": get_students(),
             "back_url": "/admin",
+            **get_admin_layout_context("students"),
         },
     )
 
@@ -210,6 +232,7 @@ async def admin_teachers(request: Request):
             ],
             "rows": get_teachers(),
             "back_url": "/admin",
+            **get_admin_layout_context("teachers"),
         },
     )
 
@@ -243,6 +266,7 @@ async def admin_new_assignment(
                 "work_types": work_types,
             },
             "roles": [role["title"] for role in ROLES],
+            **get_admin_layout_context("assignments"),
         },
     )
 
@@ -256,6 +280,7 @@ async def admin_import_students(request: Request):
         columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
         sample_path="samples/students.xlsx",
         back_url="/admin",
+        active_admin_nav="students",
     )
 
 
@@ -270,6 +295,7 @@ async def admin_import_students_submit(request: Request, file: UploadFile = File
             sample_path="samples/students.xlsx",
             back_url="/admin",
             error_message="Выберите файл в формате .xlsx.",
+            active_admin_nav="students",
         )
 
     temp_path = await save_upload_to_temp_file(file)
@@ -284,6 +310,7 @@ async def admin_import_students_submit(request: Request, file: UploadFile = File
             sample_path="samples/students.xlsx",
             back_url="/admin",
             error_message=str(error),
+            active_admin_nav="students",
         )
     finally:
         temp_path.unlink(missing_ok=True)
@@ -297,6 +324,7 @@ async def admin_import_students_submit(request: Request, file: UploadFile = File
         back_url="/admin",
         success_message=f"Загружено студентов: {imported_count}.",
         result_url="/admin/students",
+        active_admin_nav="students",
     )
 
 
@@ -317,6 +345,7 @@ async def admin_import_teachers(request: Request):
         sample_path="samples/teachers.xlsx",
         note="Ученая степень и ученое звание могут быть пустыми. Должность и ФИО обязательны.",
         back_url="/admin",
+        active_admin_nav="teachers",
     )
 
 
@@ -342,6 +371,7 @@ async def admin_import_teachers_submit(request: Request, file: UploadFile = File
             note=note,
             back_url="/admin",
             error_message="Выберите файл в формате .xlsx.",
+            active_admin_nav="teachers",
         )
 
     temp_path = await save_upload_to_temp_file(file)
@@ -357,6 +387,7 @@ async def admin_import_teachers_submit(request: Request, file: UploadFile = File
             note=note,
             back_url="/admin",
             error_message=str(error),
+            active_admin_nav="teachers",
         )
     finally:
         temp_path.unlink(missing_ok=True)
@@ -371,6 +402,7 @@ async def admin_import_teachers_submit(request: Request, file: UploadFile = File
         back_url="/admin",
         success_message=f"Загружено преподавателей: {imported_count}.",
         result_url="/admin/teachers",
+        active_admin_nav="teachers",
     )
 
 
