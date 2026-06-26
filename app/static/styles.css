@@ -2,6 +2,10 @@
   box-sizing: border-box;
 }
 
+:root {
+  --topbar-height: 72px;
+}
+
 body {
   margin: 0;
   color: #202124;
@@ -14,9 +18,10 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 24px;
+  min-height: var(--topbar-height);
   border-bottom: 1px solid #d9dee7;
   background: #ffffff;
-  padding: 16px 24px;
+  padding: 10px 24px;
 }
 
 .brand {
@@ -48,7 +53,7 @@ body {
 .admin-layout {
   display: grid;
   grid-template-columns: 260px minmax(0, 1fr);
-  min-height: calc(100vh - 65px);
+  min-height: calc(100vh - var(--topbar-height));
 }
 
 .admin-sidebar {
