@@ -4,6 +4,19 @@ from pathlib import Path
 
 DB_PATH = Path("academic_work_manager.sqlite3")
 
+ASSIGNMENT_STATUSES = {
+    "free",
+    "pending",
+    "confirmed",
+    "rejected",
+    "changed",
+}
+
+WORK_TYPES_BY_COURSE = {
+    3: ("Курсовая работа",),
+    4: ("ВКР", "ВКР/курсовая"),
+}
+
 
 def get_connection(db_path=DB_PATH):
     connection = sqlite3.connect(db_path)
@@ -78,6 +91,17 @@ def init_db(db_path=DB_PATH):
         )
 
 
+def get_work_types_for_course(course):
+    try:
+        return list(WORK_TYPES_BY_COURSE[int(course)])
+    except (KeyError, TypeError, ValueError):
+        raise ValueError("Тип работы определяется только для 3 и 4 курса")
+
+
+def get_default_work_type_for_course(course):
+    return get_work_types_for_course(course)[0]
+
+
 def get_students(db_path=DB_PATH):
     with get_connection(db_path) as connection:
         rows = connection.execute(
@@ -88,6 +112,19 @@ def get_students(db_path=DB_PATH):
             """
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def get_student(student_id, db_path=DB_PATH):
+    with get_connection(db_path) as connection:
+        row = connection.execute(
+            """
+            SELECT id, full_name, study_group, course, login, contact
+            FROM students
+            WHERE id = ?
+            """,
+            (student_id,),
+        ).fetchone()
+    return dict(row) if row else None
 
 
 def get_teachers(db_path=DB_PATH):
@@ -105,6 +142,261 @@ def get_teachers(db_path=DB_PATH):
             FROM teachers
             ORDER BY full_name
             """
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_teacher(teacher_id, db_path=DB_PATH):
+    with get_connection(db_path) as connection:
+        row = connection.execute(
+            """
+            SELECT
+                id,
+                full_name,
+                position,
+                academic_degree,
+                academic_title,
+                specialization,
+                contact
+            FROM teachers
+            WHERE id = ?
+            """,
+            (teacher_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def get_assignments(db_path=DB_PATH):
+    with get_connection(db_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT
+                assignments.id,
+                assignments.student_id,
+                students.full_name AS student_name,
+                students.study_group,
+                students.course,
+                assignments.topic_id,
+                assignments.topic_title,
+                assignments.work_type,
+                assignments.teacher_id,
+                teachers.full_name AS teacher_name,
+                assignments.status,
+                assignments.comment,
+                assignments.created_at,
+                assignments.updated_at
+            FROM assignments
+            JOIN students ON students.id = assignments.student_id
+            JOIN teachers ON teachers.id = assignments.teacher_id
+            ORDER BY students.study_group, students.full_name
+            """
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_assignment(assignment_id, db_path=DB_PATH):
+    with get_connection(db_path) as connection:
+        row = connection.execute(
+            """
+            SELECT
+                assignments.id,
+                assignments.student_id,
+                students.full_name AS student_name,
+                students.study_group,
+                students.course,
+                assignments.topic_id,
+                assignments.topic_title,
+                assignments.work_type,
+                assignments.teacher_id,
+                teachers.full_name AS teacher_name,
+                assignments.status,
+                assignments.comment,
+                assignments.created_at,
+                assignments.updated_at
+            FROM assignments
+            JOIN students ON students.id = assignments.student_id
+            JOIN teachers ON teachers.id = assignments.teacher_id
+            WHERE assignments.id = ?
+            """,
+            (assignment_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def create_assignment(
+    student_id,
+    teacher_id,
+    topic_title,
+    *,
+    work_type=None,
+    status="pending",
+    comment="",
+    topic_id=None,
+    changed_by="admin",
+    reason="Первичное назначение темы",
+    db_path=DB_PATH,
+):
+    init_db(db_path)
+    topic_title = _normalize_required_text(topic_title, "Тема не может быть пустой")
+    status = _normalize_assignment_status(status)
+    changed_by = _normalize_required_text(changed_by, "Не указано, кто изменил назначение")
+    comment = _clean_optional_text(comment)
+
+    with get_connection(db_path) as connection:
+        student = _get_student_row(connection, student_id)
+        if student is None:
+            raise ValueError("Студент не найден")
+
+        if _get_teacher_row(connection, teacher_id) is None:
+            raise ValueError("Преподаватель не найден")
+
+        existing_assignment = connection.execute(
+            "SELECT id FROM assignments WHERE student_id = ?",
+            (student_id,),
+        ).fetchone()
+        if existing_assignment:
+            raise ValueError("Для студента уже есть назначение")
+
+        work_type = _normalize_work_type_for_course(work_type, student["course"])
+        cursor = connection.execute(
+            """
+            INSERT INTO assignments (
+                student_id,
+                topic_id,
+                teacher_id,
+                topic_title,
+                work_type,
+                status,
+                comment
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                student_id,
+                topic_id,
+                teacher_id,
+                topic_title,
+                work_type,
+                status,
+                comment,
+            ),
+        )
+        assignment_id = cursor.lastrowid
+        _insert_assignment_history(
+            connection,
+            assignment_id,
+            "assignment",
+            None,
+            f"{topic_title} / {status}",
+            changed_by,
+            reason,
+        )
+
+    return get_assignment(assignment_id, db_path)
+
+
+def update_assignment(
+    assignment_id,
+    *,
+    teacher_id=None,
+    topic_title=None,
+    work_type=None,
+    status=None,
+    comment=None,
+    changed_by="admin",
+    reason="Изменение назначения",
+    db_path=DB_PATH,
+):
+    init_db(db_path)
+    changed_by = _normalize_required_text(changed_by, "Не указано, кто изменил назначение")
+
+    with get_connection(db_path) as connection:
+        current = connection.execute(
+            """
+            SELECT assignments.id, assignments.teacher_id, assignments.topic_title,
+                   assignments.work_type, assignments.status, assignments.comment,
+                   students.course
+            FROM assignments
+            JOIN students ON students.id = assignments.student_id
+            WHERE assignments.id = ?
+            """,
+            (assignment_id,),
+        ).fetchone()
+        if current is None:
+            raise ValueError("Назначение не найдено")
+
+        updates = {}
+        if teacher_id is not None:
+            if _get_teacher_row(connection, teacher_id) is None:
+                raise ValueError("Преподаватель не найден")
+            updates["teacher_id"] = teacher_id
+        if topic_title is not None:
+            updates["topic_title"] = _normalize_required_text(
+                topic_title,
+                "Тема не может быть пустой",
+            )
+        if work_type is not None:
+            updates["work_type"] = _normalize_work_type_for_course(
+                work_type,
+                current["course"],
+            )
+        if status is not None:
+            updates["status"] = _normalize_assignment_status(status)
+        if comment is not None:
+            updates["comment"] = _clean_optional_text(comment)
+
+        changed_fields = {
+            field: value
+            for field, value in updates.items()
+            if str(current[field] or "") != str(value or "")
+        }
+        if not changed_fields:
+            return get_assignment(assignment_id, db_path)
+
+        set_clause = ", ".join(f"{field} = ?" for field in changed_fields)
+        values = list(changed_fields.values())
+        values.append(assignment_id)
+        connection.execute(
+            f"""
+            UPDATE assignments
+            SET {set_clause}, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            values,
+        )
+
+        for field, new_value in changed_fields.items():
+            _insert_assignment_history(
+                connection,
+                assignment_id,
+                field,
+                current[field],
+                new_value,
+                changed_by,
+                reason,
+            )
+
+    return get_assignment(assignment_id, db_path)
+
+
+def get_assignment_history(assignment_id, db_path=DB_PATH):
+    with get_connection(db_path) as connection:
+        rows = connection.execute(
+            """
+            SELECT
+                id,
+                assignment_id,
+                field_name,
+                old_value,
+                new_value,
+                changed_by,
+                changed_at,
+                reason
+            FROM assignment_history
+            WHERE assignment_id = ?
+            ORDER BY changed_at, id
+            """,
+            (assignment_id,),
         ).fetchall()
     return [dict(row) for row in rows]
 
@@ -129,3 +421,97 @@ def get_assignments_for_export(db_path=DB_PATH):
             """
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def _get_student_row(connection, student_id):
+    return connection.execute(
+        """
+        SELECT id, full_name, study_group, course, login, contact
+        FROM students
+        WHERE id = ?
+        """,
+        (student_id,),
+    ).fetchone()
+
+
+def _get_teacher_row(connection, teacher_id):
+    return connection.execute(
+        """
+        SELECT
+            id,
+            full_name,
+            position,
+            academic_degree,
+            academic_title,
+            specialization,
+            contact
+        FROM teachers
+        WHERE id = ?
+        """,
+        (teacher_id,),
+    ).fetchone()
+
+
+def _insert_assignment_history(
+    connection,
+    assignment_id,
+    field_name,
+    old_value,
+    new_value,
+    changed_by,
+    reason,
+):
+    connection.execute(
+        """
+        INSERT INTO assignment_history (
+            assignment_id,
+            field_name,
+            old_value,
+            new_value,
+            changed_by,
+            reason
+        )
+        VALUES (?, ?, ?, ?, ?, ?)
+        """,
+        (
+            assignment_id,
+            field_name,
+            _clean_optional_text(old_value),
+            _clean_optional_text(new_value),
+            changed_by,
+            _clean_optional_text(reason),
+        ),
+    )
+
+
+def _normalize_required_text(value, error_message):
+    text = _clean_optional_text(value)
+    if not text:
+        raise ValueError(error_message)
+    return text
+
+
+def _clean_optional_text(value):
+    if value is None:
+        return ""
+    return str(value).strip()
+
+
+def _normalize_assignment_status(status):
+    status = _normalize_required_text(status, "Статус назначения не может быть пустым")
+    if status not in ASSIGNMENT_STATUSES:
+        allowed_statuses = ", ".join(sorted(ASSIGNMENT_STATUSES))
+        raise ValueError(f"Недопустимый статус назначения. Допустимо: {allowed_statuses}")
+    return status
+
+
+def _normalize_work_type_for_course(work_type, course):
+    allowed_work_types = get_work_types_for_course(course)
+    if work_type is None:
+        return allowed_work_types[0]
+
+    work_type = _normalize_required_text(work_type, "Тип работы не может быть пустым")
+    if work_type not in allowed_work_types:
+        allowed = ", ".join(allowed_work_types)
+        raise ValueError(f"Недопустимый тип работы для курса. Допустимо: {allowed}")
+    return work_type
