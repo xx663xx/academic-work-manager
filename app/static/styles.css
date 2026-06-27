@@ -275,6 +275,15 @@ article {
   opacity: 0.55;
 }
 
+.teacher-topic-list {
+  width: min(640px, 100%);
+  margin-top: 80px;
+}
+
+.teacher-topic-list article + article {
+  margin-top: 14px;
+}
+
 .message {
   border-radius: 6px;
   padding: 10px 12px;
