@@ -48,9 +48,9 @@ DASHBOARDS = {
         "title": "Панель преподавателя",
         "description": "Преподаватель вносит темы и подтверждает или отклоняет заявки студентов.",
         "actions": [
-            {"label": "Добавление темы"},
+            {"label": "Добавление темы", "url": "/teacher/topics"},
             {"label": "Редактирование своей темы"},
-            {"label": "Просмотр тем преподавателя"},
+            {"label": "Просмотр тем преподавателя", "url": "/teacher/topics"},
             {"label": "Просмотр заявок студентов"},
             {"label": "Подтверждение темы"},
             {"label": "Отказ по заявке студента"},
@@ -76,6 +76,11 @@ ADMIN_NAVIGATION = [
     {"key": "export", "label": "Экспорт"},
 ]
 
+TEACHER_NAVIGATION = [
+    {"key": "topics", "label": "Мои темы", "url": "/teacher/topics"},
+    {"key": "requests", "label": "Заявки студентов"},
+]
+
 
 def role_titles() -> list[str]:
     return [role["title"] for role in ROLES]
@@ -89,6 +94,14 @@ def get_admin_layout_context(active_admin_nav: str) -> dict:
     }
 
 
+def get_teacher_layout_context(active_teacher_nav: str) -> dict:
+    return {
+        "teacher_section": True,
+        "teacher_navigation": TEACHER_NAVIGATION,
+        "active_teacher_nav": active_teacher_nav,
+    }
+
+
 def render_dashboard(request: Request, role_key: str):
     dashboard = DASHBOARDS[role_key]
     context = {
@@ -97,6 +110,8 @@ def render_dashboard(request: Request, role_key: str):
     }
     if role_key == "admin":
         context.update(get_admin_layout_context("admin"))
+    if role_key == "teacher":
+        context.update(get_teacher_layout_context("topics"))
 
     return templates.TemplateResponse(
         request,

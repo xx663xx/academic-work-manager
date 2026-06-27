@@ -3,7 +3,67 @@
 {% block title %}Главная - Academic Work Manager{% endblock %}
 
 {% block content %}
-  {% if assignment_form %}
+  {% if teacher_topics %}
+    <section class="assignment-screen">
+      <h1>Темы преподавателя</h1>
+
+      {% if teacher_topics.success_message %}
+        <p class="message success">{{ teacher_topics.success_message }}</p>
+      {% endif %}
+      {% if teacher_topics.error_message %}
+        <p class="message error">{{ teacher_topics.error_message }}</p>
+      {% endif %}
+
+      <form class="assignment-form assignment-form-wide" method="post">
+        <div class="field">
+          <label for="title">Название темы</label>
+          <textarea id="title" name="title" rows="3" placeholder="Введите тему">{{ teacher_topics.values.title or "" }}</textarea>
+        </div>
+
+        <div class="field">
+          <label for="work_type">Тип работы</label>
+          <select id="work_type" name="work_type">
+            <option value="">Выберите тип работы</option>
+            {% for work_type in teacher_topics.work_types %}
+              <option
+                value="{{ work_type }}"
+                {% if teacher_topics.values.work_type == work_type %}selected{% endif %}
+              >
+                {{ work_type }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="description">Описание</label>
+          <textarea id="description" name="description" rows="3" placeholder="Краткое описание, если нужно">{{ teacher_topics.values.description or "" }}</textarea>
+        </div>
+
+        <button class="button save-button" type="submit">
+          Добавить тему
+        </button>
+      </form>
+
+      <section class="teacher-topic-list">
+        <h2>Список моих тем</h2>
+        {% if teacher_topics.topics %}
+          {% for topic in teacher_topics.topics %}
+            <article>
+              <h2>{{ topic.title }}</h2>
+              <p>Тип работы: {{ topic.work_type }}</p>
+              <p>{{ topic.description or "Описание не заполнено." }}</p>
+            </article>
+          {% endfor %}
+        {% else %}
+          <article>
+            <h2>Тем пока нет</h2>
+            <p>Добавленные темы появятся здесь.</p>
+          </article>
+        {% endif %}
+      </section>
+    </section>
+  {% elif assignment_form %}
     <section class="assignment-screen">
       <h1>Назначение темы</h1>
 
