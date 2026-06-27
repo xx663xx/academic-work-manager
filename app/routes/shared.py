@@ -81,6 +81,11 @@ TEACHER_NAVIGATION = [
     {"key": "requests", "label": "Заявки студентов"},
 ]
 
+STUDENT_NAVIGATION = [
+    {"key": "topics", "label": "Доступные темы", "url": "/student/topics"},
+    {"key": "assignment", "label": "Моя тема", "url": "/student/assignment"},
+]
+
 
 def role_titles() -> list[str]:
     return [role["title"] for role in ROLES]
@@ -102,6 +107,14 @@ def get_teacher_layout_context(active_teacher_nav: str) -> dict:
     }
 
 
+def get_student_layout_context(active_student_nav: str) -> dict:
+    return {
+        "student_section": True,
+        "student_navigation": STUDENT_NAVIGATION,
+        "active_student_nav": active_student_nav,
+    }
+
+
 def render_dashboard(request: Request, role_key: str):
     dashboard = DASHBOARDS[role_key]
     context = {
@@ -112,6 +125,8 @@ def render_dashboard(request: Request, role_key: str):
         context.update(get_admin_layout_context("admin"))
     if role_key == "teacher":
         context.update(get_teacher_layout_context("topics"))
+    if role_key == "student":
+        context.update(get_student_layout_context("topics"))
 
     return templates.TemplateResponse(
         request,
