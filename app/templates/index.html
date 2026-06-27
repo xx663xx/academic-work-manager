@@ -7,6 +7,28 @@
     <section class="assignment-screen">
       <h1>Назначение темы</h1>
 
+      {% if assignment_form.success_message %}
+        <p class="message success">{{ assignment_form.success_message }}</p>
+      {% endif %}
+      {% if assignment_form.error_message %}
+        <p class="message error">{{ assignment_form.error_message }}</p>
+      {% endif %}
+      {% if assignment_form.assignment_result %}
+        <article class="assignment-result">
+          <h2>Сохраненное назначение</h2>
+          <p>
+            {{ assignment_form.assignment_result.student_name }},
+            {{ assignment_form.assignment_result.study_group }}:
+            {{ assignment_form.assignment_result.topic_title }}
+          </p>
+          <p>
+            Руководитель: {{ assignment_form.assignment_result.teacher_name }}.
+            Тип работы: {{ assignment_form.assignment_result.work_type }}.
+            Статус: {{ assignment_form.assignment_result.status }}.
+          </p>
+        </article>
+      {% endif %}
+
       <form class="assignment-form assignment-form-wide" method="get">
         <div class="field">
           <label for="student_id">Студент</label>
@@ -24,13 +46,22 @@
         </div>
       </form>
 
-      <form id="assignment-details-form" class="assignment-form assignment-form-wide">
+      <form id="assignment-details-form" class="assignment-form assignment-form-wide" method="post">
+        {% if assignment_form.selected_student %}
+          <input type="hidden" name="student_id" value="{{ assignment_form.selected_student.id }}">
+        {% endif %}
+
         <div class="field">
           <label for="work_type">Тип работы</label>
           {% if assignment_form.work_types|length > 1 %}
             <select id="work_type" name="work_type">
               {% for work_type in assignment_form.work_types %}
-                <option value="{{ work_type }}">{{ work_type }}</option>
+                <option
+                  value="{{ work_type }}"
+                  {% if assignment_form.values.work_type == work_type %}selected{% endif %}
+                >
+                  {{ work_type }}
+                </option>
               {% endfor %}
             </select>
           {% elif assignment_form.work_types %}
@@ -38,7 +69,7 @@
               id="work_type"
               name="work_type"
               type="text"
-              value="{{ assignment_form.work_types[0] }}"
+              value="{{ assignment_form.values.work_type or assignment_form.work_types[0] }}"
               readonly
             >
           {% else %}
@@ -48,7 +79,7 @@
 
         <div class="field">
           <label for="topic_title">Тема</label>
-          <textarea id="topic_title" name="topic_title" rows="3" placeholder="Введите тему работы"></textarea>
+          <textarea id="topic_title" name="topic_title" rows="3" placeholder="Введите тему работы">{{ assignment_form.values.topic_title or "" }}</textarea>
         </div>
 
         <div class="assignment-footer">
@@ -57,12 +88,23 @@
             <select id="teacher_id" name="teacher_id">
               <option value="">Выберите преподавателя</option>
               {% for teacher in assignment_form.teachers %}
-                <option value="{{ teacher.id }}">{{ teacher.full_name }}</option>
+                <option
+                  value="{{ teacher.id }}"
+                  {% if assignment_form.values.teacher_id == teacher.id %}selected{% endif %}
+                >
+                  {{ teacher.full_name }}
+                </option>
               {% endfor %}
             </select>
           </div>
 
-          <button class="button save-button" type="button" disabled>Сохранить</button>
+          <button
+            class="button save-button"
+            type="submit"
+            {% if not assignment_form.selected_student %}disabled{% endif %}
+          >
+            Сохранить
+          </button>
         </div>
       </form>
     </section>

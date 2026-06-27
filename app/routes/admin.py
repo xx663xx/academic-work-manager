@@ -1,6 +1,12 @@
-from fastapi import APIRouter, File, Query, Request, UploadFile
+from fastapi import APIRouter, File, Form, Query, Request, UploadFile
 
-from app.database import get_students, get_teachers, get_work_types_for_course, init_db
+from app.database import (
+    create_assignment,
+    get_students,
+    get_teachers,
+    get_work_types_for_course,
+    init_db,
+)
 from app.excel_io import import_students_from_excel, import_teachers_from_excel
 from app.routes.shared import (
     get_admin_layout_context,
@@ -74,11 +80,91 @@ async def admin_new_assignment(
     request: Request,
     student_id: int | None = Query(default=None),
 ):
+    return render_assignment_form(
+        request,
+        selected_student_id=student_id,
+    )
+
+
+@router.post("/assignments/new")
+async def admin_create_assignment(
+    request: Request,
+    student_id: str = Form(""),
+    teacher_id: str = Form(""),
+    topic_title: str = Form(""),
+    work_type: str = Form(""),
+):
+    selected_student_id = parse_optional_int(student_id)
+    selected_teacher_id = parse_optional_int(teacher_id)
+    if selected_student_id is None:
+        return render_assignment_form(
+            request,
+            error_message="Выберите студента.",
+            form_values={
+                "teacher_id": selected_teacher_id,
+                "topic_title": topic_title,
+                "work_type": work_type,
+            },
+        )
+    if selected_teacher_id is None:
+        return render_assignment_form(
+            request,
+            selected_student_id=selected_student_id,
+            error_message="Выберите преподавателя.",
+            form_values={
+                "teacher_id": selected_teacher_id,
+                "topic_title": topic_title,
+                "work_type": work_type,
+            },
+        )
+
+    try:
+        assignment = create_assignment(
+            selected_student_id,
+            selected_teacher_id,
+            topic_title,
+            work_type=work_type or None,
+            changed_by="admin",
+        )
+    except ValueError as error:
+        return render_assignment_form(
+            request,
+            selected_student_id=selected_student_id,
+            error_message=str(error),
+            form_values={
+                "teacher_id": selected_teacher_id,
+                "topic_title": topic_title,
+                "work_type": work_type,
+            },
+        )
+
+    return render_assignment_form(
+        request,
+        selected_student_id=assignment["student_id"],
+        success_message="Назначение сохранено.",
+        assignment_result=assignment,
+        form_values={
+            "teacher_id": assignment["teacher_id"],
+            "topic_title": assignment["topic_title"],
+            "work_type": assignment["work_type"],
+        },
+    )
+
+
+def render_assignment_form(
+    request: Request,
+    *,
+    selected_student_id: int | None = None,
+    success_message: str = "",
+    error_message: str = "",
+    assignment_result: dict | None = None,
+    form_values: dict | None = None,
+):
     init_db()
     students = get_students()
     teachers = get_teachers()
     selected_student = next(
-        (student for student in students if student["id"] == student_id),
+        (student for student in students if student["id"] == selected_student_id),
         None,
     )
     work_types = (
@@ -96,11 +182,22 @@ async def admin_new_assignment(
                 "teachers": teachers,
                 "selected_student": selected_student,
                 "work_types": work_types,
+                "success_message": success_message,
+                "error_message": error_message,
+                "assignment_result": assignment_result,
+                "values": form_values or {},
             },
             "roles": role_titles(),
             **get_admin_layout_context("assignments"),
         },
     )
+
+
+def parse_optional_int(value: str) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
 
 
 @router.get("/import/students")
