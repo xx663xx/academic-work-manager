@@ -6,11 +6,11 @@
     <title>{% block title %}Academic Work Manager{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
   </head>
-  <body class="{% if admin_section or teacher_section %}admin-body{% endif %}">
+  <body class="{% if admin_section or teacher_section or student_section %}admin-body{% endif %}">
     <header class="topbar">
       <div class="brand">
         <strong>Academic Work Manager</strong>
-        {% if not admin_section and not teacher_section %}
+        {% if not admin_section and not teacher_section and not student_section %}
           <span>каркас приложения</span>
         {% endif %}
       </div>
@@ -18,11 +18,13 @@
         <a class="role-pill" href="/login">Админ</a>
       {% elif teacher_section %}
         <a class="role-pill" href="/login">Преподаватель</a>
+      {% elif student_section %}
+        <a class="role-pill" href="/login">Студент</a>
       {% endif %}
     </header>
-    <div class="{% if admin_section or teacher_section %}admin-layout{% endif %}">
-      {% if admin_section or teacher_section %}
-        <aside class="admin-sidebar" aria-label="{% if admin_section %}Навигация администратора{% else %}Навигация преподавателя{% endif %}">
+    <div class="{% if admin_section or teacher_section or student_section %}admin-layout{% endif %}">
+      {% if admin_section or teacher_section or student_section %}
+        <aside class="admin-sidebar" aria-label="{% if admin_section %}Навигация администратора{% elif teacher_section %}Навигация преподавателя{% else %}Навигация студента{% endif %}">
           <nav>
             {% if admin_section %}
               {% for item in admin_navigation %}
@@ -56,10 +58,26 @@
                 {% endif %}
               {% endfor %}
             {% endif %}
+            {% if student_section %}
+              {% for item in student_navigation %}
+                {% if item.url %}
+                  <a
+                    class="{% if active_student_nav == item.key %}active{% endif %}"
+                    href="{{ item.url }}"
+                  >
+                    {{ item.label }}
+                  </a>
+                {% else %}
+                  <span class="{% if active_student_nav == item.key %}active{% endif %}">
+                    {{ item.label }}
+                  </span>
+                {% endif %}
+              {% endfor %}
+            {% endif %}
           </nav>
         </aside>
       {% endif %}
-      <main class="page {% if admin_section or teacher_section %}admin-page{% endif %}">
+      <main class="page {% if admin_section or teacher_section or student_section %}admin-page{% endif %}">
         {% block content %}{% endblock %}
       </main>
     </div>

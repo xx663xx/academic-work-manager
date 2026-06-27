@@ -75,6 +75,7 @@ body {
   font-size: 18px;
   padding: 14px 22px;
   text-decoration: none;
+  white-space: nowrap;
 }
 
 .admin-sidebar a.active,
@@ -92,6 +93,7 @@ body {
 
 .admin-page {
   width: min(940px, 100%);
+  min-width: 0;
   margin: 0;
   padding: 56px 24px;
 }
@@ -284,6 +286,65 @@ article {
   margin-top: 14px;
 }
 
+.student-screen {
+  width: min(980px, 100%);
+  min-width: 0;
+}
+
+.topic-table {
+  margin-top: 22px;
+}
+
+.status-badge {
+  display: inline-block;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #075985;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+
+.table-button {
+  border: 1px solid #cbd5e1;
+  min-height: 36px;
+  padding: 8px 12px;
+  font: inherit;
+}
+
+.student-assignment-card {
+  width: min(720px, 100%);
+  margin-top: 22px;
+}
+
+.student-assignment-card h2 {
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.assignment-details {
+  display: grid;
+  gap: 14px;
+  margin: 24px 0 0;
+}
+
+.assignment-details div {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 18px;
+}
+
+.assignment-details dt {
+  color: #64748b;
+  font-weight: 700;
+}
+
+.assignment-details dd {
+  margin: 0;
+}
+
 .message {
   border-radius: 6px;
   padding: 10px 12px;
@@ -394,6 +455,11 @@ li + li {
 
   .assignment-footer {
     grid-template-columns: 1fr;
+  }
+
+  .assignment-details div {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 
   .grid,

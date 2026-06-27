@@ -3,7 +3,84 @@
 {% block title %}Главная - Academic Work Manager{% endblock %}
 
 {% block content %}
-  {% if teacher_topics %}
+  {% if student_workspace %}
+    <section class="assignment-screen student-screen">
+      {% if student_workspace.active_tab == "topics" %}
+        <h1>Доступные темы</h1>
+        <p class="muted">
+          Постоянный список тем будет подключен через слой данных после согласования функций хранения тем.
+        </p>
+
+        <div class="table-wrap topic-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Тема</th>
+                <th>Тип работы</th>
+                <th>Руководитель</th>
+                <th>Статус</th>
+                <th>Действие</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for topic in student_workspace.topics %}
+                <tr>
+                  <td>{{ topic.title }}</td>
+                  <td>{{ topic.work_type }}</td>
+                  <td>{{ topic.teacher_name }}</td>
+                  <td>
+                    <span class="status-badge">{{ topic.status }}</span>
+                  </td>
+                  <td>
+                    <button class="button secondary table-button" type="button" disabled>
+                      Выбрать
+                    </button>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% elif student_workspace.active_tab == "assignment" %}
+        <h1>Моя тема</h1>
+
+        {% if student_workspace.assignment %}
+          <article class="student-assignment-card">
+            <p class="muted">
+              {{ student_workspace.assignment.student_name }},
+              {{ student_workspace.assignment.study_group }},
+              {{ student_workspace.assignment.course }} курс
+            </p>
+            <h2>{{ student_workspace.assignment.topic_title }}</h2>
+            <dl class="assignment-details">
+              <div>
+                <dt>Тип работы</dt>
+                <dd>{{ student_workspace.assignment.work_type }}</dd>
+              </div>
+              <div>
+                <dt>Руководитель</dt>
+                <dd>{{ student_workspace.assignment.teacher_name }}</dd>
+              </div>
+              <div>
+                <dt>Статус</dt>
+                <dd>
+                  <span class="status-badge">{{ student_workspace.assignment.status }}</span>
+                </dd>
+              </div>
+            </dl>
+          </article>
+        {% else %}
+          <article class="student-assignment-card">
+            <h2>Тема пока не выбрана</h2>
+            <p>После выбора темы информация о руководителе и статусе появится здесь.</p>
+            <p>
+              <a class="button" href="/student/topics">Перейти к доступным темам</a>
+            </p>
+          </article>
+        {% endif %}
+      {% endif %}
+    </section>
+  {% elif teacher_topics %}
     <section class="assignment-screen">
       <h1>Темы преподавателя</h1>
 
