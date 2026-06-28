@@ -17,6 +17,12 @@ WORK_TYPES_BY_COURSE = {
     4: ("ВКР", "ВКР/курсовая"),
 }
 
+TOPIC_WORK_TYPES = {
+    work_type
+    for work_types in WORK_TYPES_BY_COURSE.values()
+    for work_type in work_types
+}
+
 
 def get_connection(db_path=DB_PATH):
     connection = sqlite3.connect(db_path)
@@ -164,6 +170,318 @@ def get_teacher(teacher_id, db_path=DB_PATH):
             (teacher_id,),
         ).fetchone()
     return dict(row) if row else None
+
+
+def create_topic(
+    teacher_id,
+    title,
+    work_type,
+    *,
+    description="",
+    reserved_student_id=None,
+    status="free",
+    db_path=DB_PATH,
+):
+    init_db(db_path)
+    title = _normalize_required_text(title, "Название темы не может быть пустым")
+    work_type = _normalize_topic_work_type(work_type)
+    description = _clean_optional_text(description)
+    status = _normalize_assignment_status(status)
+
+    with get_connection(db_path) as connection:
+        if _get_teacher_row(connection, teacher_id) is None:
+            raise ValueError("Преподаватель не найден")
+
+        if reserved_student_id is not None:
+            if _get_student_row(connection, reserved_student_id) is None:
+                raise ValueError("Студент для закрепления темы не найден")
+
+        cursor = connection.execute(
+            """
+            INSERT INTO topics (
+                title,
+                work_type,
+                description,
+                teacher_id,
+                reserved_student_id,
+                status
+            )
+            VALUES (?, ?, ?, ?, ?, ?)
+            """,
+            (
+                title,
+                work_type,
+                description,
+                teacher_id,
+                reserved_student_id,
+                status,
+            ),
+        )
+        topic_id = cursor.lastrowid
+
+    return get_topic(topic_id, db_path)
+
+
+def get_topic(topic_id, db_path=DB_PATH):
+    with get_connection(db_path) as connection:
+        row = _get_topic_with_teacher_row(connection, topic_id)
+    return dict(row) if row else None
+
+
+def get_teacher_topics(teacher_id, db_path=DB_PATH):
+    init_db(db_path)
+    with get_connection(db_path) as connection:
+        if _get_teacher_row(connection, teacher_id) is None:
+            raise ValueError("Преподаватель не найден")
+
+        rows = connection.execute(
+            """
+            SELECT
+                topics.id,
+                topics.title,
+                topics.work_type,
+                topics.description,
+                topics.teacher_id,
+                teachers.full_name AS teacher_name,
+                topics.reserved_student_id,
+                students.full_name AS reserved_student_name,
+                topics.status
+            FROM topics
+            JOIN teachers ON teachers.id = topics.teacher_id
+            LEFT JOIN students ON students.id = topics.reserved_student_id
+            WHERE topics.teacher_id = ?
+            ORDER BY topics.status, topics.title
+            """,
+            (teacher_id,),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_available_topics_for_student(student_id, db_path=DB_PATH):
+    init_db(db_path)
+    with get_connection(db_path) as connection:
+        student = _get_student_row(connection, student_id)
+        if student is None:
+            raise ValueError("Студент не найден")
+
+        allowed_work_types = get_work_types_for_course(student["course"])
+        placeholders = ", ".join("?" for _ in allowed_work_types)
+        rows = connection.execute(
+            f"""
+            SELECT
+                topics.id,
+                topics.title,
+                topics.work_type,
+                topics.description,
+                topics.teacher_id,
+                teachers.full_name AS teacher_name,
+                topics.reserved_student_id,
+                students.full_name AS reserved_student_name,
+                topics.status
+            FROM topics
+            JOIN teachers ON teachers.id = topics.teacher_id
+            LEFT JOIN students ON students.id = topics.reserved_student_id
+            WHERE topics.status = 'free'
+              AND topics.work_type IN ({placeholders})
+              AND (
+                  topics.reserved_student_id IS NULL
+                  OR topics.reserved_student_id = ?
+              )
+            ORDER BY teachers.full_name, topics.title
+            """,
+            (*allowed_work_types, student_id),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def get_student_assignment(student_id, db_path=DB_PATH):
+    init_db(db_path)
+    with get_connection(db_path) as connection:
+        if _get_student_row(connection, student_id) is None:
+            raise ValueError("Студент не найден")
+
+        row = connection.execute(
+            """
+            SELECT
+                assignments.id,
+                assignments.student_id,
+                students.full_name AS student_name,
+                students.study_group,
+                students.course,
+                assignments.topic_id,
+                assignments.topic_title,
+                assignments.work_type,
+                assignments.teacher_id,
+                teachers.full_name AS teacher_name,
+                assignments.status,
+                assignments.comment,
+                assignments.created_at,
+                assignments.updated_at
+            FROM assignments
+            JOIN students ON students.id = assignments.student_id
+            JOIN teachers ON teachers.id = assignments.teacher_id
+            WHERE assignments.student_id = ?
+            """,
+            (student_id,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def choose_topic_for_student(
+    student_id,
+    topic_id,
+    *,
+    changed_by="student",
+    db_path=DB_PATH,
+):
+    init_db(db_path)
+    changed_by = _normalize_required_text(changed_by, "Не указано, кто выбрал тему")
+
+    with get_connection(db_path) as connection:
+        student = _get_student_row(connection, student_id)
+        if student is None:
+            raise ValueError("Студент не найден")
+
+        topic = _get_topic_row(connection, topic_id)
+        if topic is None:
+            raise ValueError("Тема не найдена")
+        if topic["status"] != "free":
+            raise ValueError("Тема уже недоступна для выбора")
+        if (
+            topic["reserved_student_id"] is not None
+            and topic["reserved_student_id"] != student_id
+        ):
+            raise ValueError("Тема закреплена за другим студентом")
+
+        _normalize_work_type_for_course(topic["work_type"], student["course"])
+
+        existing_assignment = connection.execute(
+            "SELECT id FROM assignments WHERE student_id = ?",
+            (student_id,),
+        ).fetchone()
+        if existing_assignment:
+            raise ValueError("Для студента уже есть назначение")
+
+        cursor = connection.execute(
+            """
+            INSERT INTO assignments (
+                student_id,
+                topic_id,
+                teacher_id,
+                topic_title,
+                work_type,
+                status,
+                comment
+            )
+            VALUES (?, ?, ?, ?, ?, 'pending', ?)
+            """,
+            (
+                student_id,
+                topic_id,
+                topic["teacher_id"],
+                topic["title"],
+                topic["work_type"],
+                "",
+            ),
+        )
+        assignment_id = cursor.lastrowid
+        connection.execute(
+            """
+            UPDATE topics
+            SET status = 'pending', reserved_student_id = ?
+            WHERE id = ?
+            """,
+            (student_id, topic_id),
+        )
+        _insert_assignment_history(
+            connection,
+            assignment_id,
+            "assignment",
+            None,
+            f"{topic['title']} / pending",
+            changed_by,
+            "Студент выбрал тему",
+        )
+
+    return get_assignment(assignment_id, db_path)
+
+
+def get_teacher_topic_requests(teacher_id, *, status="pending", db_path=DB_PATH):
+    init_db(db_path)
+    with get_connection(db_path) as connection:
+        if _get_teacher_row(connection, teacher_id) is None:
+            raise ValueError("Преподаватель не найден")
+
+        status_filter = ""
+        params = [teacher_id]
+        if status is not None:
+            status = _normalize_assignment_status(status)
+            status_filter = "AND assignments.status = ?"
+            params.append(status)
+
+        rows = connection.execute(
+            f"""
+            SELECT
+                assignments.id AS assignment_id,
+                assignments.student_id,
+                students.full_name AS student_name,
+                students.study_group,
+                students.course,
+                assignments.topic_id,
+                assignments.topic_title,
+                assignments.work_type,
+                assignments.teacher_id,
+                teachers.full_name AS teacher_name,
+                assignments.status,
+                assignments.comment,
+                assignments.created_at,
+                assignments.updated_at
+            FROM assignments
+            JOIN students ON students.id = assignments.student_id
+            JOIN teachers ON teachers.id = assignments.teacher_id
+            WHERE assignments.teacher_id = ?
+              AND assignments.topic_id IS NOT NULL
+              {status_filter}
+            ORDER BY assignments.updated_at DESC, students.full_name
+            """,
+            params,
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def confirm_topic_request(
+    assignment_id,
+    *,
+    changed_by="teacher",
+    reason="Преподаватель подтвердил тему",
+    db_path=DB_PATH,
+):
+    return _set_topic_request_status(
+        assignment_id,
+        assignment_status="confirmed",
+        topic_status="confirmed",
+        changed_by=changed_by,
+        reason=reason,
+        db_path=db_path,
+    )
+
+
+def reject_topic_request(
+    assignment_id,
+    *,
+    changed_by="teacher",
+    reason="Преподаватель отклонил тему",
+    db_path=DB_PATH,
+):
+    return _set_topic_request_status(
+        assignment_id,
+        assignment_status="rejected",
+        topic_status="free",
+        clear_topic_reservation=True,
+        changed_by=changed_by,
+        reason=reason,
+        db_path=db_path,
+    )
 
 
 def get_assignments(db_path=DB_PATH):
@@ -452,6 +770,125 @@ def _get_teacher_row(connection, teacher_id):
     ).fetchone()
 
 
+def _get_topic_row(connection, topic_id):
+    return connection.execute(
+        """
+        SELECT
+            id,
+            title,
+            work_type,
+            description,
+            teacher_id,
+            reserved_student_id,
+            status
+        FROM topics
+        WHERE id = ?
+        """,
+        (topic_id,),
+    ).fetchone()
+
+
+def _get_topic_with_teacher_row(connection, topic_id):
+    return connection.execute(
+        """
+        SELECT
+            topics.id,
+            topics.title,
+            topics.work_type,
+            topics.description,
+            topics.teacher_id,
+            teachers.full_name AS teacher_name,
+            topics.reserved_student_id,
+            students.full_name AS reserved_student_name,
+            topics.status
+        FROM topics
+        JOIN teachers ON teachers.id = topics.teacher_id
+        LEFT JOIN students ON students.id = topics.reserved_student_id
+        WHERE topics.id = ?
+        """,
+        (topic_id,),
+    ).fetchone()
+
+
+def _set_topic_request_status(
+    assignment_id,
+    *,
+    assignment_status,
+    topic_status,
+    clear_topic_reservation=False,
+    changed_by,
+    reason,
+    db_path,
+):
+    init_db(db_path)
+    assignment_status = _normalize_assignment_status(assignment_status)
+    topic_status = _normalize_assignment_status(topic_status)
+    changed_by = _normalize_required_text(changed_by, "Не указано, кто изменил заявку")
+
+    with get_connection(db_path) as connection:
+        current = connection.execute(
+            """
+            SELECT
+                id,
+                topic_id,
+                status
+            FROM assignments
+            WHERE id = ?
+            """,
+            (assignment_id,),
+        ).fetchone()
+        if current is None:
+            raise ValueError("Заявка не найдена")
+        if current["topic_id"] is None:
+            raise ValueError("Назначение не связано с темой преподавателя")
+        if current["status"] != "pending":
+            raise ValueError("Заявка уже обработана")
+
+        topic = _get_topic_row(connection, current["topic_id"])
+        if topic is None:
+            raise ValueError("Тема заявки не найдена")
+
+        connection.execute(
+            """
+            UPDATE assignments
+            SET status = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+            """,
+            (assignment_status, assignment_id),
+        )
+
+        if clear_topic_reservation:
+            connection.execute(
+                """
+                UPDATE topics
+                SET status = ?, reserved_student_id = NULL
+                WHERE id = ?
+                """,
+                (topic_status, current["topic_id"]),
+            )
+        else:
+            connection.execute(
+                """
+                UPDATE topics
+                SET status = ?
+                WHERE id = ?
+                """,
+                (topic_status, current["topic_id"]),
+            )
+
+        _insert_assignment_history(
+            connection,
+            assignment_id,
+            "status",
+            current["status"],
+            assignment_status,
+            changed_by,
+            reason,
+        )
+
+    return get_assignment(assignment_id, db_path)
+
+
 def _insert_assignment_history(
     connection,
     assignment_id,
@@ -503,6 +940,14 @@ def _normalize_assignment_status(status):
         allowed_statuses = ", ".join(sorted(ASSIGNMENT_STATUSES))
         raise ValueError(f"Недопустимый статус назначения. Допустимо: {allowed_statuses}")
     return status
+
+
+def _normalize_topic_work_type(work_type):
+    work_type = _normalize_required_text(work_type, "Тип работы не может быть пустым")
+    if work_type not in TOPIC_WORK_TYPES:
+        allowed = ", ".join(sorted(TOPIC_WORK_TYPES))
+        raise ValueError(f"Недопустимый тип работы для темы. Допустимо: {allowed}")
+    return work_type
 
 
 def _normalize_work_type_for_course(work_type, course):
