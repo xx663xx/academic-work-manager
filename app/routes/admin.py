@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, Form, Query, Request, UploadFile
 
 from app.database import (
     create_assignment,
+    get_assignments,
     get_students,
     get_teachers,
     get_work_types_for_course,
@@ -19,6 +20,14 @@ from app.routes.shared import (
 
 
 router = APIRouter(prefix="/admin")
+
+STATUS_LABELS = {
+    "free": "свободно",
+    "pending": "ожидает подтверждения",
+    "confirmed": "подтверждено",
+    "rejected": "отказано",
+    "changed": "изменено",
+}
 
 
 @router.get("")
@@ -71,6 +80,22 @@ async def admin_teachers(request: Request):
             "rows": get_teachers(),
             "back_url": "/admin",
             **get_admin_layout_context("teachers"),
+        },
+    )
+
+
+@router.get("/assignments")
+async def admin_assignments(request: Request):
+    init_db()
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "admin_assignments": {
+                "assignments": add_status_labels(get_assignments()),
+            },
+            "roles": role_titles(),
+            **get_admin_layout_context("assignments"),
         },
     )
 
@@ -198,6 +223,18 @@ def parse_optional_int(value: str) -> int | None:
         return int(value)
     except (TypeError, ValueError):
         return None
+
+
+def add_status_labels(rows: list[dict]) -> list[dict]:
+    labeled_rows = []
+    for row in rows:
+        labeled_row = dict(row)
+        labeled_row["status_label"] = STATUS_LABELS.get(
+            labeled_row["status"],
+            labeled_row["status"],
+        )
+        labeled_rows.append(labeled_row)
+    return labeled_rows
 
 
 @router.get("/import/students")
