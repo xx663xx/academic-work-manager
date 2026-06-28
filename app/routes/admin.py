@@ -1,4 +1,4 @@
-from fastapi import APIRouter, File, Form, Query, Request, UploadFile
+import tempfile
 
 from app.database import (
     create_assignment,
@@ -7,6 +7,10 @@ from app.database import (
     get_work_types_for_course,
     init_db,
 )
+from app.database import get_assignments_for_export
+from app.database import get_assignments_for_export
+from app.excel_io import export_assignments_to_excel
+from app.excel_io import export_assignments_to_excel
 from app.excel_io import import_students_from_excel, import_teachers_from_excel
 from app.routes.shared import (
     get_admin_layout_context,
@@ -16,7 +20,8 @@ from app.routes.shared import (
     save_upload_to_temp_file,
     templates,
 )
-
+from fastapi import APIRouter, File, Form, Query, Request, UploadFile
+from fastapi.responses import FileResponse, HTMLResponse
 
 router = APIRouter(prefix="/admin")
 
@@ -333,3 +338,65 @@ async def admin_import_teachers_submit(request: Request, file: UploadFile = File
         result_url="/admin/teachers",
         active_admin_nav="teachers",
     )
+
+
+@router.get("/export")
+async def admin_export_page(request: Request):
+    try:
+        assignments = get_assignments_for_export()
+        return templates.TemplateResponse(
+            request,
+            "export.html",
+            {
+                "title": "Экспорт назначений",
+                "assignments_count": len(assignments),
+                "has_assignments": len(assignments) > 0,
+                **get_admin_layout_context("export"),
+            },
+        )
+    except Exception as e:
+        return templates.TemplateResponse(
+            request,
+            "export.html",
+            {
+                "title": "Экспорт назначений",
+                "error_message": f"Ошибка при загрузке данных: {str(e)}",
+                "assignments_count": 0,
+                "has_assignments": False,
+                **get_admin_layout_context("export"),
+            },
+        )
+
+
+@router.get("/export/download")
+async def admin_export_download():
+    try:
+        assignments = get_assignments_for_export()
+
+        if not assignments:
+            return HTMLResponse(
+                content="<h1>Ошибка</h1><p>Нет назначений для экспорта.</p><a href='/admin/export'>Вернуться</a>",
+                status_code=400
+            )
+
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".xlsx") as tmp_file:
+            temp_path = tmp_file.name
+
+        export_assignments_to_excel(temp_path)
+
+        return FileResponse(
+            path=temp_path,
+            filename="assignments.xlsx",
+            media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    except ValueError as e:
+        return HTMLResponse(
+            content=f"<h1>Ошибка</h1><p>{str(e)}</p><a href='/admin/export'>Вернуться</a>",
+            status_code=400
+        )
+    except Exception as e:
+        return HTMLResponse(
+            content=f"<h1>Ошибка при экспорте</h1><p>{str(e)}</p><a href='/admin/export'>Вернуться</a>",
+            status_code=500
+        )

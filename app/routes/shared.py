@@ -4,7 +4,6 @@ from tempfile import NamedTemporaryFile
 from fastapi import Request, UploadFile
 from fastapi.templating import Jinja2Templates
 
-
 BASE_DIR = Path(__file__).resolve().parents[1]
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
@@ -41,16 +40,16 @@ DASHBOARDS = {
             {"label": "Управление назначениями"},
             {"label": "Изменение темы или руководителя"},
             {"label": "Настройка сроков и блокировок"},
-            {"label": "Экспорт результата в Excel"},
+            {"label": "Экспорт результата в Excel", "url": "/admin/export"},
         ],
     },
     "teacher": {
         "title": "Панель преподавателя",
         "description": "Преподаватель вносит темы и подтверждает или отклоняет заявки студентов.",
         "actions": [
-            {"label": "Добавление темы"},
+            {"label": "Добавление темы", "url": "/teacher/topics"},
             {"label": "Редактирование своей темы"},
-            {"label": "Просмотр тем преподавателя"},
+            {"label": "Просмотр тем преподавателя", "url": "/teacher/topics"},
             {"label": "Просмотр заявок студентов"},
             {"label": "Подтверждение темы"},
             {"label": "Отказ по заявке студента"},
@@ -73,7 +72,17 @@ ADMIN_NAVIGATION = [
     {"key": "students", "label": "Студенты", "url": "/admin/students"},
     {"key": "teachers", "label": "Преподаватели", "url": "/admin/teachers"},
     {"key": "assignments", "label": "Назначения", "url": "/admin/assignments/new"},
-    {"key": "export", "label": "Экспорт"},
+    {"key": "export", "label": "Экспорт", "url": "/admin/export"},  # ← ДОБАВЛЕНО
+]
+
+TEACHER_NAVIGATION = [
+    {"key": "topics", "label": "Мои темы", "url": "/teacher/topics"},
+    {"key": "requests", "label": "Заявки студентов"},
+]
+
+STUDENT_NAVIGATION = [
+    {"key": "topics", "label": "Доступные темы", "url": "/student/topics"},
+    {"key": "assignment", "label": "Моя тема", "url": "/student/assignment"},
 ]
 
 
@@ -89,6 +98,22 @@ def get_admin_layout_context(active_admin_nav: str) -> dict:
     }
 
 
+def get_teacher_layout_context(active_teacher_nav: str) -> dict:
+    return {
+        "teacher_section": True,
+        "teacher_navigation": TEACHER_NAVIGATION,
+        "active_teacher_nav": active_teacher_nav,
+    }
+
+
+def get_student_layout_context(active_student_nav: str) -> dict:
+    return {
+        "student_section": True,
+        "student_navigation": STUDENT_NAVIGATION,
+        "active_student_nav": active_student_nav,
+    }
+
+
 def render_dashboard(request: Request, role_key: str):
     dashboard = DASHBOARDS[role_key]
     context = {
@@ -97,6 +122,10 @@ def render_dashboard(request: Request, role_key: str):
     }
     if role_key == "admin":
         context.update(get_admin_layout_context("admin"))
+    if role_key == "teacher":
+        context.update(get_teacher_layout_context("topics"))
+    if role_key == "student":
+        context.update(get_student_layout_context("topics"))
 
     return templates.TemplateResponse(
         request,

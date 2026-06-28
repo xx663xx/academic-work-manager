@@ -1,10 +1,8 @@
 from pathlib import Path
 
+from app.routes import admin, home, student, teacher
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-
-from app.routes import admin, home, student, teacher
-
 
 BASE_DIR = Path(__file__).resolve().parent
 

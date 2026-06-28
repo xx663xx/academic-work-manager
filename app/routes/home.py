@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Request
-
 from app.routes.shared import ROLES, role_titles, templates
-
+from fastapi import APIRouter, Request
 
 router = APIRouter()
 

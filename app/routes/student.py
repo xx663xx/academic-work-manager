@@ -1,7 +1,5 @@
-from fastapi import APIRouter, Request
-
 from app.routes.shared import render_dashboard
-
+from fastapi import APIRouter, Request
 
 router = APIRouter(prefix="/student")
 

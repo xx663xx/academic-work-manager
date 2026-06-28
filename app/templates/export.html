@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    {% if admin_section %}
+    <nav class="admin-nav">
+        {% for item in admin_navigation %}
+        <a href="{{ item.url }}" class="{% if active_admin_nav == item.key %}active{% endif %}">
+            {{ item.label }}
+        </a>
+        {% endfor %}
+    </nav>
+    {% endif %}
+
+    <h1>{{ title }}</h1>
+
+    {% if error_message %}
+    <div class="alert alert-error">
+        <strong>Ошибка:</strong> {{ error_message }}
+    </div>
+    {% endif %}
+
+    {% if success_message %}
+    <div class="alert alert-success">
+        <strong>Успешно:</strong> {{ success_message }}
+    </div>
+    {% endif %}
+
+    <div class="card">
+        <h2>Экспорт назначений в Excel</h2>
+
+        {% if has_assignments %}
+        <p class="info-text">
+            Найдено назначений: <strong>{{ assignments_count }}</strong>
+        </p>
+
+        <p>
+            Файл будет содержать следующие колонки:
+        </p>
+        <ul>
+            <li>ФИО студента</li>
+            <li>Группа</li>
+            <li>Курс</li>
+            <li>Тип работы</li>
+            <li>Тема работы</li>
+            <li>Руководитель</li>
+            <li>Статус</li>
+            <li>Дата назначения</li>
+        </ul>
+
+        <div class="actions">
+            <a href="/admin/export/download" class="btn btn-primary">
+                📥 Скачать Excel-файл
+            </a>
+            <a href="/admin" class="btn btn-secondary">
+                ← Назад к дашборду
+            </a>
+        </div>
+
+        {% else %}
+        <div class="alert alert-warning">
+            <strong>Нет назначений для выгрузки</strong>
+            <p>Сначала создайте назначения студентов.</p>
+        </div>
+
+        <div class="actions">
+            <a href="/admin/assignments/new" class="btn btn-primary">
+                📝 Назначить тему
+            </a>
+            <a href="/admin" class="btn btn-secondary">
+                ← Назад к дашборду
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

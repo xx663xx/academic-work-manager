@@ -1,9 +1,7 @@
 from pathlib import Path
 
-from openpyxl import Workbook, load_workbook
-
 from app.database import DB_PATH, get_assignments_for_export, get_connection, init_db
-
+from openpyxl import Workbook, load_workbook
 
 STUDENT_COLUMNS = ["ФИО", "Группа", "Курс", "Логин", "Контакт"]
 TEACHER_COLUMNS = [
