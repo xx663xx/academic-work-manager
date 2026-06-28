@@ -78,7 +78,7 @@ ADMIN_NAVIGATION = [
 
 TEACHER_NAVIGATION = [
     {"key": "topics", "label": "Мои темы", "url": "/teacher/topics"},
-    {"key": "requests", "label": "Заявки студентов"},
+    {"key": "requests", "label": "Заявки студентов", "url": "/teacher/requests"},
 ]
 
 STUDENT_NAVIGATION = [
