@@ -373,11 +373,39 @@ article {
 }
 
 .teacher-requests-table table {
-  min-width: 1180px;
+  min-width: 1320px;
+  table-layout: fixed;
 }
 
-.teacher-requests-table th:last-child,
-.teacher-requests-table td:last-child {
+.teacher-requests-table th:nth-child(1),
+.teacher-requests-table td:nth-child(1) {
+  width: 245px;
+}
+
+.teacher-requests-table th:nth-child(2),
+.teacher-requests-table td:nth-child(2) {
+  width: 92px;
+}
+
+.teacher-requests-table th:nth-child(3),
+.teacher-requests-table td:nth-child(3) {
+  width: 315px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.teacher-requests-table th:nth-child(4),
+.teacher-requests-table td:nth-child(4) {
+  width: 160px;
+}
+
+.teacher-requests-table th:nth-child(5),
+.teacher-requests-table td:nth-child(5) {
+  width: 220px;
+}
+
+.teacher-requests-table th:nth-child(6),
+.teacher-requests-table td:nth-child(6) {
   width: 290px;
 }
 
