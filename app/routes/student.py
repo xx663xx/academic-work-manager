@@ -9,6 +9,8 @@ from app.database import (
 )
 from app.routes.shared import get_student_layout_context, role_titles, templates
 
+from app.routes.shared import render_dashboard
+from fastapi import APIRouter, Request
 
 router = APIRouter(prefix="/student")
 

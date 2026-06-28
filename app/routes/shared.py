@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 from fastapi import Request, UploadFile
 from fastapi.templating import Jinja2Templates
 
+
 BASE_DIR = Path(__file__).resolve().parents[1]
 templates = Jinja2Templates(directory=BASE_DIR / "templates")
 
@@ -35,9 +36,9 @@ DASHBOARDS = {
             {"label": "Импорт преподавателей", "url": "/admin/import/teachers"},
             {"label": "Просмотр студентов", "url": "/admin/students"},
             {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
+            {"label": "Просмотр назначений", "url": "/admin/assignments"},
             {"label": "Назначить тему студенту", "url": "/admin/assignments/new"},
             {"label": "Просмотр всех тем"},
-            {"label": "Управление назначениями"},
             {"label": "Изменение темы или руководителя"},
             {"label": "Настройка сроков и блокировок"},
             {"label": "Экспорт результата в Excel", "url": "/admin/export"},
@@ -72,17 +73,17 @@ ADMIN_NAVIGATION = [
     {"key": "students", "label": "Студенты", "url": "/admin/students"},
     {"key": "teachers", "label": "Преподаватели", "url": "/admin/teachers"},
     {"key": "assignments", "label": "Назначения", "url": "/admin/assignments/new"},
-    {"key": "export", "label": "Экспорт", "url": "/admin/export"},  # ← ДОБАВЛЕНО
-]
-
-TEACHER_NAVIGATION = [
-    {"key": "topics", "label": "Мои темы", "url": "/teacher/topics"},
-    {"key": "requests", "label": "Заявки студентов"},
+    {"key": "export", "label": "Экспорт", "url": "/admin/export"},
 ]
 
 STUDENT_NAVIGATION = [
     {"key": "topics", "label": "Доступные темы", "url": "/student/topics"},
     {"key": "assignment", "label": "Моя тема", "url": "/student/assignment"},
+]
+
+TEACHER_NAVIGATION = [
+    {"key": "topics", "label": "Мои темы", "url": "/teacher/topics"},
+    {"key": "requests", "label": "Заявки студентов", "url": "/teacher/requests"},
 ]
 
 
@@ -164,7 +165,7 @@ def render_import_form(
 
     return templates.TemplateResponse(request, "import_form.html", context)
 
-#dodelat
+
 async def save_upload_to_temp_file(file: UploadFile) -> Path:
     suffix = Path(file.filename or "").suffix
     with NamedTemporaryFile(delete=False, suffix=suffix) as temp_file:
