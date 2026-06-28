@@ -36,9 +36,9 @@ DASHBOARDS = {
             {"label": "Импорт преподавателей", "url": "/admin/import/teachers"},
             {"label": "Просмотр студентов", "url": "/admin/students"},
             {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
+            {"label": "Просмотр назначений", "url": "/admin/assignments"},
             {"label": "Назначить тему студенту", "url": "/admin/assignments/new"},
             {"label": "Просмотр всех тем"},
-            {"label": "Управление назначениями"},
             {"label": "Изменение темы или руководителя"},
             {"label": "Настройка сроков и блокировок"},
             {"label": "Экспорт результата в Excel"},
@@ -72,7 +72,7 @@ ADMIN_NAVIGATION = [
     {"key": "admin", "label": "Админ", "url": "/admin"},
     {"key": "students", "label": "Студенты", "url": "/admin/students"},
     {"key": "teachers", "label": "Преподаватели", "url": "/admin/teachers"},
-    {"key": "assignments", "label": "Назначения", "url": "/admin/assignments/new"},
+    {"key": "assignments", "label": "Назначения", "url": "/admin/assignments"},
     {"key": "export", "label": "Экспорт"},
 ]
 

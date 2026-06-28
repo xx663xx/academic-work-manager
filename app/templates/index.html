@@ -258,6 +258,57 @@
         </article>
       {% endif %}
     </section>
+  {% elif admin_assignments %}
+    <section class="assignment-screen admin-assignments-screen">
+      <div class="page-heading">
+        <div>
+          <h1>Назначения</h1>
+          <p class="muted">Итоговый список выбранных и назначенных тем.</p>
+        </div>
+        <a class="button" href="/admin/assignments/new">Создать назначение</a>
+      </div>
+
+      {% if admin_assignments.assignments %}
+        <div class="table-wrap topic-table admin-assignments-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Студент</th>
+                <th>Группа</th>
+                <th>Курс</th>
+                <th>Тип работы</th>
+                <th>Тема</th>
+                <th>Руководитель</th>
+                <th>Статус</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for assignment in admin_assignments.assignments %}
+                <tr>
+                  <td>{{ assignment.student_name }}</td>
+                  <td>{{ assignment.study_group }}</td>
+                  <td>{{ assignment.course }}</td>
+                  <td>{{ assignment.work_type }}</td>
+                  <td>{{ assignment.topic_title }}</td>
+                  <td>{{ assignment.teacher_name }}</td>
+                  <td>
+                    <span class="status-badge status-{{ assignment.status }}">{{ assignment.status_label }}</span>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <article class="student-assignment-card">
+          <h2>Назначений пока нет</h2>
+          <p>После выбора темы студентом или ручного назначения администратором записи появятся здесь.</p>
+          <p>
+            <a class="button" href="/admin/assignments/new">Создать назначение</a>
+          </p>
+        </article>
+      {% endif %}
+    </section>
   {% elif assignment_form %}
     <section class="assignment-screen">
       <h1>Назначение темы</h1>

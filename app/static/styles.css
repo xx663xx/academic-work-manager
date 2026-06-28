@@ -92,7 +92,7 @@ body {
 }
 
 .admin-page {
-  width: min(940px, 100%);
+  width: min(1380px, 100%);
   min-width: 0;
   margin: 0;
   padding: 56px 24px;
@@ -294,18 +294,86 @@ article {
 }
 
 .student-screen {
-  width: min(980px, 100%);
+  width: min(1380px, 100%);
   min-width: 0;
+}
+
+.admin-assignments-screen {
+  width: min(1380px, 100%);
+}
+
+.page-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 22px;
+}
+
+.page-heading h1 {
+  margin-bottom: 8px;
 }
 
 .topic-table {
   margin-top: 22px;
 }
 
+.admin-assignments-table table {
+  min-width: 1320px;
+  table-layout: fixed;
+}
+
+.admin-assignments-table th,
+.admin-assignments-table td {
+  white-space: nowrap;
+}
+
+.admin-assignments-table th:nth-child(1),
+.admin-assignments-table td:nth-child(1) {
+  width: 245px;
+}
+
+.admin-assignments-table th:nth-child(2),
+.admin-assignments-table td:nth-child(2) {
+  width: 92px;
+}
+
+.admin-assignments-table th:nth-child(3),
+.admin-assignments-table td:nth-child(3) {
+  width: 64px;
+}
+
+.admin-assignments-table th:nth-child(4),
+.admin-assignments-table td:nth-child(4) {
+  width: 160px;
+}
+
+.admin-assignments-table th:nth-child(5),
+.admin-assignments-table td:nth-child(5) {
+  width: 320px;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.admin-assignments-table th:nth-child(6),
+.admin-assignments-table td:nth-child(6) {
+  width: 250px;
+}
+
+.admin-assignments-table th:nth-child(7),
+.admin-assignments-table td:nth-child(7) {
+  width: 220px;
+}
+
 .teacher-requests-table th,
 .teacher-requests-table td {
+  white-space: nowrap;
   padding-left: 16px;
   padding-right: 16px;
+}
+
+.teacher-requests-table table {
+  min-width: 1180px;
 }
 
 .teacher-requests-table th:last-child,
@@ -522,6 +590,10 @@ li + li {
 
   .assignment-screen h1 {
     font-size: 30px;
+  }
+
+  .page-heading {
+    display: grid;
   }
 
   .assignment-footer {
