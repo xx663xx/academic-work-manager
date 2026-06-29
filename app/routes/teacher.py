@@ -27,6 +27,13 @@ STATUS_LABELS = {
     "rejected": "отказано",
     "changed": "изменено",
 }
+STATUS_TABLE_LABELS = {
+    "free": "свободно",
+    "pending": "ожидает",
+    "confirmed": "подтверждено",
+    "rejected": "отказано",
+    "changed": "изменено",
+}
 
 
 @router.get("")
@@ -183,7 +190,11 @@ def add_status_labels(rows: list[dict]) -> list[dict]:
     labeled_rows = []
     for row in rows:
         labeled_row = dict(row)
-        labeled_row["status_label"] = STATUS_LABELS.get(
+        labeled_row["status_label"] = STATUS_TABLE_LABELS.get(
+            labeled_row["status"],
+            labeled_row["status"],
+        )
+        labeled_row["status_title"] = STATUS_LABELS.get(
             labeled_row["status"],
             labeled_row["status"],
         )
