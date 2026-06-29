@@ -136,13 +136,29 @@
         <p class="message error">{{ teacher_topics.error_message }}</p>
       {% endif %}
 
-      {% if teacher_topics.current_teacher %}
-        <p class="muted">
-          Текущий преподаватель: {{ teacher_topics.current_teacher.full_name }}.
-        </p>
+      {% if teacher_topics.teachers %}
+        <form class="assignment-form student-picker" method="get">
+          <div class="field">
+            <label for="teacher_id">Преподаватель</label>
+            <select id="teacher_id" name="teacher_id" onchange="this.form.submit()">
+              {% for teacher in teacher_topics.teachers %}
+                <option
+                  value="{{ teacher.id }}"
+                  {% if teacher_topics.current_teacher and teacher_topics.current_teacher.id == teacher.id %}selected{% endif %}
+                >
+                  {{ teacher.full_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
       {% endif %}
 
       <form class="assignment-form assignment-form-wide" method="post">
+        {% if teacher_topics.current_teacher %}
+          <input type="hidden" name="teacher_id" value="{{ teacher_topics.current_teacher.id }}">
+        {% endif %}
+
         <div class="field">
           <label for="title">Название темы</label>
           <textarea id="title" name="title" rows="3" placeholder="Введите тему">{{ teacher_topics.values.title or "" }}</textarea>
@@ -204,9 +220,21 @@
       {% endif %}
 
       {% if teacher_requests.current_teacher %}
-        <p class="muted">
-          Текущий преподаватель: {{ teacher_requests.current_teacher.full_name }}.
-        </p>
+        <form class="assignment-form student-picker" method="get">
+          <div class="field">
+            <label for="teacher_id">Преподаватель</label>
+            <select id="teacher_id" name="teacher_id" onchange="this.form.submit()">
+              {% for teacher in teacher_requests.teachers %}
+                <option
+                  value="{{ teacher.id }}"
+                  {% if teacher_requests.current_teacher and teacher_requests.current_teacher.id == teacher.id %}selected{% endif %}
+                >
+                  {{ teacher.full_name }}
+                </option>
+              {% endfor %}
+            </select>
+          </div>
+        </form>
       {% endif %}
 
       {% if teacher_requests.requests %}
@@ -243,10 +271,10 @@
                   <td class="request-action-cell">
                     {% if request_item.status == "pending" %}
                       <div class="request-actions">
-                        <form method="post" action="/teacher/requests/{{ request_item.assignment_id }}/confirm">
+                        <form method="post" action="/teacher/requests/{{ request_item.assignment_id }}/confirm?teacher_id={{ teacher_requests.current_teacher.id }}">
                           <button class="button table-button confirm-button" type="submit">Подтвердить</button>
                         </form>
-                        <form method="post" action="/teacher/requests/{{ request_item.assignment_id }}/reject">
+                        <form method="post" action="/teacher/requests/{{ request_item.assignment_id }}/reject?teacher_id={{ teacher_requests.current_teacher.id }}">
                           <button class="button secondary table-button" type="submit">Отклонить</button>
                         </form>
                       </div>
@@ -337,6 +365,55 @@
           </p>
         </article>
       {% endif %}
+    </section>
+  {% elif admin_import %}
+    <section class="assignment-screen">
+      <h1>Импорт</h1>
+      <p class="muted">
+        Загрузите справочники студентов и преподавателей из Excel-файлов.
+      </p>
+
+      <section class="grid">
+        {% for option in admin_import.options %}
+          <article>
+            <h2>{{ option.title }}</h2>
+            <p>{{ option.description }}</p>
+            <p>
+              <a class="button" href="{{ option.url }}">Загрузить Excel</a>
+            </p>
+          </article>
+        {% endfor %}
+      </section>
+
+      <section class="danger-zone">
+        <h2>Опасная зона</h2>
+        <p class="muted">
+          Очистка нужна только перед повторным импортом данных.
+        </p>
+
+        {% if admin_import.success_message %}
+          <p class="message success">{{ admin_import.success_message }}</p>
+        {% endif %}
+        {% if admin_import.error_message %}
+          <p class="message error">{{ admin_import.error_message }}</p>
+        {% endif %}
+
+        <form class="assignment-form assignment-form-wide" method="post" action="/admin/import/clear">
+          <p>
+            Будут удалены студенты, преподаватели, темы, назначения и история.
+            После этого нужно заново импортировать Excel-файлы.
+          </p>
+
+          <div class="field">
+            <label for="confirmation">Подтверждение</label>
+            <input id="confirmation" name="confirmation" type="text" placeholder="Введите ОЧИСТИТЬ">
+          </div>
+
+          <button class="button danger-button" type="submit">
+            Очистить базу данных
+          </button>
+        </form>
+      </section>
     </section>
   {% elif assignment_form %}
     <section class="assignment-screen">

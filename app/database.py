@@ -104,6 +104,20 @@ def init_db(db_path=DB_PATH):
         )
 
 
+def clear_all_data(db_path=DB_PATH):
+    init_db(db_path)
+    with get_connection(db_path) as connection:
+        connection.execute("DELETE FROM assignment_history")
+        connection.execute("DELETE FROM assignments")
+        connection.execute("DELETE FROM topics")
+        connection.execute("DELETE FROM students")
+        connection.execute("DELETE FROM teachers")
+        connection.execute(
+            "DELETE FROM sqlite_sequence WHERE name IN (?, ?, ?, ?, ?)",
+            ("assignment_history", "assignments", "topics", "students", "teachers"),
+        )
+
+
 def get_work_types_for_course(course):
     try:
         return list(WORK_TYPES_BY_COURSE[int(course)])

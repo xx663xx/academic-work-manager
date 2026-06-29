@@ -37,8 +37,7 @@ DASHBOARDS = {
             "назначений и Excel-выгрузка результата."
         ),
         "actions": [
-            {"label": "Импорт студентов", "url": "/admin/import/students"},
-            {"label": "Импорт преподавателей", "url": "/admin/import/teachers"},
+            {"label": "Импорт из Excel", "url": "/admin/import"},
             {"label": "Просмотр студентов", "url": "/admin/students"},
             {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
             {"label": "Просмотр назначений", "url": "/admin/assignments"},
@@ -84,8 +83,9 @@ DASHBOARDS = {
 
 ADMIN_NAVIGATION = [
     {"key": "admin", "label": "Админ", "url": "/admin"},
-    {"key": "students", "label": "Студенты", "url": "/admin/students"},
+    {"key": "import", "label": "Импорт", "url": "/admin/import"},
     {"key": "teachers", "label": "Преподаватели", "url": "/admin/teachers"},
+    {"key": "students", "label": "Студенты", "url": "/admin/students"},
     {"key": "assignments", "label": "Назначения", "url": "/admin/assignments"},
 ]
 
@@ -112,10 +112,23 @@ def get_admin_layout_context(active_admin_nav: str) -> dict:
     }
 
 
-def get_teacher_layout_context(active_teacher_nav: str) -> dict:
+def get_teacher_layout_context(
+    active_teacher_nav: str,
+    selected_teacher_id: int | None = None,
+) -> dict:
+    teacher_navigation = TEACHER_NAVIGATION
+    if selected_teacher_id is not None:
+        teacher_navigation = [
+            {
+                **item,
+                "url": f"{item['url']}?teacher_id={selected_teacher_id}",
+            }
+            for item in TEACHER_NAVIGATION
+        ]
+
     return {
         "teacher_section": True,
-        "teacher_navigation": TEACHER_NAVIGATION,
+        "teacher_navigation": teacher_navigation,
         "active_teacher_nav": active_teacher_nav,
     }
 

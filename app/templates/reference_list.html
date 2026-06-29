@@ -7,6 +7,9 @@
     <h1>{{ title }}</h1>
     <p>{{ description }}</p>
     <p>
+      {% if primary_action_url %}
+        <a class="button" href="{{ primary_action_url }}">{{ primary_action_label }}</a>
+      {% endif %}
       <a class="button secondary" href="{{ back_url }}">Назад</a>
     </p>
   </section>

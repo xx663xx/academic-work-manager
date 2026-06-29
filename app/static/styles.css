@@ -171,6 +171,10 @@ article {
   color: #1f2937;
 }
 
+.button.danger-button {
+  background: #b91c1c;
+}
+
 .button:disabled {
   background: #cbd5e1;
   color: #475569;
@@ -574,6 +578,13 @@ article {
   border: 1px solid #fca5a5;
   background: #fef2f2;
   color: #991b1b;
+}
+
+.danger-zone {
+  width: min(720px, 100%);
+  margin-top: 32px;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 24px;
 }
 
 .action-link {

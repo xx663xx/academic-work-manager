@@ -5,6 +5,7 @@ from fastapi import APIRouter, BackgroundTasks, File, Form, Query, Request, Uplo
 from fastapi.responses import FileResponse
 
 from app.database import (
+    clear_all_data,
     create_assignment,
     get_assignments,
     get_students,
@@ -69,6 +70,8 @@ async def admin_students(request: Request):
             ],
             "rows": get_students(),
             "back_url": "/admin",
+            "primary_action_label": "Загрузить Excel",
+            "primary_action_url": "/admin/import/students",
             **get_admin_layout_context("students"),
         },
     )
@@ -94,7 +97,64 @@ async def admin_teachers(request: Request):
             ],
             "rows": get_teachers(),
             "back_url": "/admin",
+            "primary_action_label": "Загрузить Excel",
+            "primary_action_url": "/admin/import/teachers",
             **get_admin_layout_context("teachers"),
+        },
+    )
+
+
+@router.get("/import")
+async def admin_import(request: Request):
+    return render_admin_import(request)
+
+
+@router.post("/import/clear")
+async def admin_clear_data(
+    request: Request,
+    confirmation: str = Form(""),
+):
+    if confirmation.strip() != "ОЧИСТИТЬ":
+        return render_admin_import(
+            request,
+            error_message="Для очистки нужно ввести ОЧИСТИТЬ.",
+        )
+
+    clear_all_data()
+    return render_admin_import(
+        request,
+        success_message="База данных полностью очищена. Загрузите студентов и преподавателей заново.",
+    )
+
+
+def render_admin_import(
+    request: Request,
+    *,
+    success_message: str = "",
+    error_message: str = "",
+):
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "admin_import": {
+                "options": [
+                    {
+                        "title": "Студенты",
+                        "description": "Загрузить список студентов из Excel-файла.",
+                        "url": "/admin/import/students",
+                    },
+                    {
+                        "title": "Преподаватели",
+                        "description": "Загрузить список преподавателей из Excel-файла.",
+                        "url": "/admin/import/teachers",
+                    },
+                ],
+                "success_message": success_message,
+                "error_message": error_message,
+            },
+            "roles": role_titles(),
+            **get_admin_layout_context("import"),
         },
     )
 
@@ -307,8 +367,8 @@ async def admin_import_students(request: Request):
         description="Загрузка справочника студентов из Excel-файла.",
         columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
         sample_path="samples/students.xlsx",
-        back_url="/admin",
-        active_admin_nav="students",
+        back_url="/admin/students",
+        active_admin_nav="import",
     )
 
 
@@ -321,9 +381,9 @@ async def admin_import_students_submit(request: Request, file: UploadFile = File
             description="Загрузка справочника студентов из Excel-файла.",
             columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
             sample_path="samples/students.xlsx",
-            back_url="/admin",
+            back_url="/admin/students",
             error_message="Выберите файл в формате .xlsx.",
-            active_admin_nav="students",
+            active_admin_nav="import",
         )
 
     temp_path = await save_upload_to_temp_file(file)
@@ -336,9 +396,9 @@ async def admin_import_students_submit(request: Request, file: UploadFile = File
             description="Загрузка справочника студентов из Excel-файла.",
             columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
             sample_path="samples/students.xlsx",
-            back_url="/admin",
+            back_url="/admin/students",
             error_message=str(error),
-            active_admin_nav="students",
+            active_admin_nav="import",
         )
     finally:
         temp_path.unlink(missing_ok=True)
@@ -349,10 +409,10 @@ async def admin_import_students_submit(request: Request, file: UploadFile = File
         description="Загрузка справочника студентов из Excel-файла.",
         columns=["ФИО", "Группа", "Курс", "Логин", "Контакт"],
         sample_path="samples/students.xlsx",
-        back_url="/admin",
+        back_url="/admin/students",
         success_message=f"Загружено студентов: {imported_count}.",
         result_url="/admin/students",
-        active_admin_nav="students",
+        active_admin_nav="import",
     )
 
 
@@ -372,8 +432,8 @@ async def admin_import_teachers(request: Request):
         ],
         sample_path="samples/teachers.xlsx",
         note="Ученая степень и ученое звание могут быть пустыми. Должность и ФИО обязательны.",
-        back_url="/admin",
-        active_admin_nav="teachers",
+        back_url="/admin/teachers",
+        active_admin_nav="import",
     )
 
 
@@ -397,9 +457,9 @@ async def admin_import_teachers_submit(request: Request, file: UploadFile = File
             columns=columns,
             sample_path="samples/teachers.xlsx",
             note=note,
-            back_url="/admin",
+            back_url="/admin/teachers",
             error_message="Выберите файл в формате .xlsx.",
-            active_admin_nav="teachers",
+            active_admin_nav="import",
         )
 
     temp_path = await save_upload_to_temp_file(file)
@@ -413,9 +473,9 @@ async def admin_import_teachers_submit(request: Request, file: UploadFile = File
             columns=columns,
             sample_path="samples/teachers.xlsx",
             note=note,
-            back_url="/admin",
+            back_url="/admin/teachers",
             error_message=str(error),
-            active_admin_nav="teachers",
+            active_admin_nav="import",
         )
     finally:
         temp_path.unlink(missing_ok=True)
@@ -427,8 +487,8 @@ async def admin_import_teachers_submit(request: Request, file: UploadFile = File
         columns=columns,
         sample_path="samples/teachers.xlsx",
         note=note,
-        back_url="/admin",
+        back_url="/admin/teachers",
         success_message=f"Загружено преподавателей: {imported_count}.",
         result_url="/admin/teachers",
-        active_admin_nav="teachers",
+        active_admin_nav="import",
     )
