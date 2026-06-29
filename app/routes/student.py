@@ -117,7 +117,10 @@ def render_student_page(
                 "error_message": error_message,
             },
             "roles": role_titles(),
-            **get_student_layout_context(active_tab),
+            **get_student_layout_context(
+                active_tab,
+                selected_student["id"] if selected_student else None,
+            ),
         },
     )
 

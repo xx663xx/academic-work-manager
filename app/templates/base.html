@@ -4,15 +4,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Academic Work Manager{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='styles.css') }}?v=20260629-11">
   </head>
   <body class="{% if admin_section or teacher_section or student_section %}admin-body{% endif %}">
     <header class="topbar">
       <div class="brand">
-        <strong>Academic Work Manager</strong>
-        {% if not admin_section and not teacher_section and not student_section %}
-          <span>каркас приложения</span>
-        {% endif %}
+        <a class="brand-link" href="/login">
+          <strong>Academic Work Manager</strong>
+        </a>
       </div>
       {% if admin_section %}
         <a class="role-pill" href="/login">Админ</a>

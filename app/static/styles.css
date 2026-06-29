@@ -4,6 +4,7 @@
 
 :root {
   --topbar-height: 72px;
+  --workspace-width: 1600px;
 }
 
 body {
@@ -30,8 +31,22 @@ body {
   align-items: baseline;
 }
 
-.brand strong {
+.brand-link,
+.brand-link:link,
+.brand-link:visited,
+.brand-link:hover,
+.brand-link:focus,
+.brand-link:active {
+  display: inline-flex;
+  color: #20242a !important;
+  text-decoration: none !important;
   white-space: nowrap;
+}
+
+.brand-link strong {
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .brand span {
@@ -92,7 +107,7 @@ body {
 }
 
 .admin-page {
-  width: min(1380px, 100%);
+  width: min(var(--workspace-width), 100%);
   min-width: 0;
   margin: 0;
   padding: 56px 24px;
@@ -189,6 +204,11 @@ article {
 
 .assignment-form-wide + .assignment-form-wide {
   margin-top: 20px;
+}
+
+.assignment-result {
+  width: min(860px, 100%);
+  margin: 0 0 30px;
 }
 
 .field {
@@ -294,12 +314,12 @@ article {
 }
 
 .student-screen {
-  width: min(1380px, 100%);
+  width: min(var(--workspace-width), 100%);
   min-width: 0;
 }
 
 .admin-assignments-screen {
-  width: min(1380px, 100%);
+  width: min(var(--workspace-width), 100%);
 }
 
 .page-heading {
@@ -314,99 +334,126 @@ article {
   margin-bottom: 8px;
 }
 
+.page-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
 .topic-table {
   margin-top: 22px;
 }
 
 .admin-assignments-table table {
-  min-width: 1320px;
+  min-width: 100%;
   table-layout: fixed;
 }
 
 .admin-assignments-table th,
 .admin-assignments-table td {
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
-.admin-assignments-table th:nth-child(1),
-.admin-assignments-table td:nth-child(1) {
-  width: 245px;
+.assignment-col-student {
+  width: 23%;
+}
+
+.assignment-col-group {
+  width: 7%;
+}
+
+.assignment-col-course {
+  width: 5%;
+}
+
+.assignment-col-work-type {
+  width: 12%;
+}
+
+.assignment-col-topic {
+  width: 23%;
+}
+
+.assignment-col-status {
+  width: 13%;
+}
+
+.assignment-col-teacher {
+  width: 17%;
 }
 
 .admin-assignments-table th:nth-child(2),
-.admin-assignments-table td:nth-child(2) {
-  width: 92px;
-}
-
+.admin-assignments-table td:nth-child(2),
 .admin-assignments-table th:nth-child(3),
 .admin-assignments-table td:nth-child(3) {
-  width: 64px;
+  white-space: nowrap;
 }
 
-.admin-assignments-table th:nth-child(4),
-.admin-assignments-table td:nth-child(4) {
-  width: 160px;
-}
-
-.admin-assignments-table th:nth-child(5),
-.admin-assignments-table td:nth-child(5) {
-  width: 320px;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
-.admin-assignments-table th:nth-child(6),
-.admin-assignments-table td:nth-child(6) {
-  width: 250px;
-}
-
-.admin-assignments-table th:nth-child(7),
-.admin-assignments-table td:nth-child(7) {
-  width: 220px;
+.admin-assignments-table td:nth-child(7) .status-badge {
+  display: inline-flex;
+  justify-content: center;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .teacher-requests-table th,
 .teacher-requests-table td {
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
   padding-left: 16px;
   padding-right: 16px;
 }
 
 .teacher-requests-table table {
-  min-width: 1320px;
+  min-width: 100%;
   table-layout: fixed;
 }
 
-.teacher-requests-table th:nth-child(1),
-.teacher-requests-table td:nth-child(1) {
-  width: 245px;
+.request-col-student {
+  width: 20%;
+}
+
+.request-col-group {
+  width: 7%;
+}
+
+.request-col-topic {
+  width: 27%;
+}
+
+.request-col-work-type {
+  width: 13%;
+}
+
+.request-col-status {
+  width: 10%;
+}
+
+.request-col-action {
+  width: 23%;
 }
 
 .teacher-requests-table th:nth-child(2),
-.teacher-requests-table td:nth-child(2) {
-  width: 92px;
-}
-
-.teacher-requests-table th:nth-child(3),
-.teacher-requests-table td:nth-child(3) {
-  width: 315px;
-  white-space: normal;
-  overflow-wrap: anywhere;
-}
-
+.teacher-requests-table td:nth-child(2),
 .teacher-requests-table th:nth-child(4),
 .teacher-requests-table td:nth-child(4) {
-  width: 160px;
+  white-space: nowrap;
 }
 
-.teacher-requests-table th:nth-child(5),
-.teacher-requests-table td:nth-child(5) {
-  width: 220px;
+.teacher-requests-table td:nth-child(5) .status-badge {
+  display: inline-flex;
+  justify-content: center;
+  line-height: 1.25;
+  text-align: center;
+  white-space: nowrap;
 }
 
-.teacher-requests-table th:nth-child(6),
-.teacher-requests-table td:nth-child(6) {
-  width: 290px;
+.request-actions .table-button {
+  overflow-wrap: normal;
+  white-space: nowrap;
 }
 
 .student-picker {
@@ -562,7 +609,7 @@ td {
   border-bottom: 1px solid #e5e7eb;
   padding: 10px 12px;
   text-align: left;
-  vertical-align: top;
+  vertical-align: middle;
 }
 
 th {

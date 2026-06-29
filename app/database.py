@@ -1,8 +1,11 @@
 import sqlite3
+from datetime import datetime
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 
 DB_PATH = Path("academic_work_manager.sqlite3")
+IRKUTSK_TZ = ZoneInfo("Asia/Irkutsk")
 
 ASSIGNMENT_STATUSES = {
     "free",
@@ -22,6 +25,10 @@ TOPIC_WORK_TYPES = {
     for work_types in WORK_TYPES_BY_COURSE.values()
     for work_type in work_types
 }
+
+
+def current_irkutsk_timestamp():
+    return datetime.now(IRKUTSK_TZ).strftime("%Y-%m-%d %H:%M:%S")
 
 
 def get_connection(db_path=DB_PATH):
@@ -362,6 +369,7 @@ def choose_topic_for_student(
         if existing_assignment:
             raise ValueError("Для студента уже есть назначение")
 
+        timestamp = current_irkutsk_timestamp()
         cursor = connection.execute(
             """
             INSERT INTO assignments (
@@ -371,9 +379,11 @@ def choose_topic_for_student(
                 topic_title,
                 work_type,
                 status,
-                comment
+                comment,
+                created_at,
+                updated_at
             )
-            VALUES (?, ?, ?, ?, ?, 'pending', ?)
+            VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?)
             """,
             (
                 student_id,
@@ -382,6 +392,8 @@ def choose_topic_for_student(
                 topic["title"],
                 topic["work_type"],
                 "",
+                timestamp,
+                timestamp,
             ),
         )
         assignment_id = cursor.lastrowid
@@ -401,6 +413,7 @@ def choose_topic_for_student(
             f"{topic['title']} / pending",
             changed_by,
             "Студент выбрал тему",
+            changed_at=timestamp,
         )
 
     return get_assignment(assignment_id, db_path)
@@ -576,6 +589,7 @@ def create_assignment(
             raise ValueError("Для студента уже есть назначение")
 
         work_type = _normalize_work_type_for_course(work_type, student["course"])
+        timestamp = current_irkutsk_timestamp()
         cursor = connection.execute(
             """
             INSERT INTO assignments (
@@ -585,9 +599,11 @@ def create_assignment(
                 topic_title,
                 work_type,
                 status,
-                comment
+                comment,
+                created_at,
+                updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 student_id,
@@ -597,6 +613,8 @@ def create_assignment(
                 work_type,
                 status,
                 comment,
+                timestamp,
+                timestamp,
             ),
         )
         assignment_id = cursor.lastrowid
@@ -608,6 +626,7 @@ def create_assignment(
             f"{topic_title} / {status}",
             changed_by,
             reason,
+            changed_at=timestamp,
         )
 
     return get_assignment(assignment_id, db_path)
@@ -672,12 +691,14 @@ def update_assignment(
             return get_assignment(assignment_id, db_path)
 
         set_clause = ", ".join(f"{field} = ?" for field in changed_fields)
+        timestamp = current_irkutsk_timestamp()
         values = list(changed_fields.values())
+        values.append(timestamp)
         values.append(assignment_id)
         connection.execute(
             f"""
             UPDATE assignments
-            SET {set_clause}, updated_at = CURRENT_TIMESTAMP
+            SET {set_clause}, updated_at = ?
             WHERE id = ?
             """,
             values,
@@ -692,6 +713,7 @@ def update_assignment(
                 new_value,
                 changed_by,
                 reason,
+                changed_at=timestamp,
             )
 
     return get_assignment(assignment_id, db_path)
@@ -848,13 +870,14 @@ def _set_topic_request_status(
         if topic is None:
             raise ValueError("Тема заявки не найдена")
 
+        timestamp = current_irkutsk_timestamp()
         connection.execute(
             """
             UPDATE assignments
-            SET status = ?, updated_at = CURRENT_TIMESTAMP
+            SET status = ?, updated_at = ?
             WHERE id = ?
             """,
-            (assignment_status, assignment_id),
+            (assignment_status, timestamp, assignment_id),
         )
 
         if clear_topic_reservation:
@@ -884,6 +907,7 @@ def _set_topic_request_status(
             assignment_status,
             changed_by,
             reason,
+            changed_at=timestamp,
         )
 
     return get_assignment(assignment_id, db_path)
@@ -897,7 +921,12 @@ def _insert_assignment_history(
     new_value,
     changed_by,
     reason,
+    *,
+    changed_at=None,
 ):
+    if changed_at is None:
+        changed_at = current_irkutsk_timestamp()
+
     connection.execute(
         """
         INSERT INTO assignment_history (
@@ -906,9 +935,10 @@ def _insert_assignment_history(
             old_value,
             new_value,
             changed_by,
+            changed_at,
             reason
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
         """,
         (
             assignment_id,
@@ -916,6 +946,7 @@ def _insert_assignment_history(
             _clean_optional_text(old_value),
             _clean_optional_text(new_value),
             changed_by,
+            changed_at,
             _clean_optional_text(reason),
         ),
     )

@@ -31,6 +31,11 @@ DASHBOARDS = {
     "admin": {
         "title": "Панель администратора",
         "description": "Администратор имеет полный доступ к данным, настройкам и всем назначениям.",
+        "status": (
+            "Раздел администратора подключен к базе данных. Доступны импорт студентов "
+            "и преподавателей, просмотр справочников, создание назначений, список "
+            "назначений и Excel-выгрузка результата."
+        ),
         "actions": [
             {"label": "Импорт студентов", "url": "/admin/import/students"},
             {"label": "Импорт преподавателей", "url": "/admin/import/teachers"},
@@ -38,32 +43,41 @@ DASHBOARDS = {
             {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
             {"label": "Просмотр назначений", "url": "/admin/assignments"},
             {"label": "Назначить тему студенту", "url": "/admin/assignments/new"},
-            {"label": "Просмотр всех тем"},
             {"label": "Изменение темы или руководителя"},
             {"label": "Настройка сроков и блокировок"},
-            {"label": "Экспорт результата в Excel"},
+            {"label": "Экспорт результата в Excel", "url": "/admin/assignments"},
         ],
     },
     "teacher": {
         "title": "Панель преподавателя",
         "description": "Преподаватель вносит темы и подтверждает или отклоняет заявки студентов.",
+        "status": (
+            "Раздел преподавателя подключен к данным, преподаватель может добавлять "
+            "темы, видеть свои темы, просматривать заявки студентов и подтверждать "
+            "или отклонять выбор темы."
+        ),
         "actions": [
             {"label": "Добавление темы", "url": "/teacher/topics"},
             {"label": "Редактирование своей темы"},
             {"label": "Просмотр тем преподавателя", "url": "/teacher/topics"},
-            {"label": "Просмотр заявок студентов"},
-            {"label": "Подтверждение темы"},
-            {"label": "Отказ по заявке студента"},
+            {"label": "Просмотр заявок студентов", "url": "/teacher/requests"},
+            {"label": "Подтверждение темы", "url": "/teacher/requests"},
+            {"label": "Отказ по заявке студента", "url": "/teacher/requests"},
         ],
     },
     "student": {
         "title": "Панель студента",
         "description": "Студент выбирает доступную тему и отслеживает статус согласования.",
+        "status": (
+            "Раздел студента работает с реальными темами: студент видит подходящие "
+            "темы по курсу, отправляет выбранную тему на подтверждение и смотрит "
+            "свое текущее назначение."
+        ),
         "actions": [
-            {"label": "Просмотр доступных тем"},
-            {"label": "Выбор темы до подтверждения"},
-            {"label": "Просмотр своей темы и руководителя"},
-            {"label": "Просмотр статуса согласования"},
+            {"label": "Просмотр доступных тем", "url": "/student/topics"},
+            {"label": "Выбор темы до подтверждения", "url": "/student/topics"},
+            {"label": "Просмотр своей темы и руководителя", "url": "/student/assignment"},
+            {"label": "Просмотр статуса согласования", "url": "/student/assignment"},
         ],
     },
 }
@@ -73,7 +87,6 @@ ADMIN_NAVIGATION = [
     {"key": "students", "label": "Студенты", "url": "/admin/students"},
     {"key": "teachers", "label": "Преподаватели", "url": "/admin/teachers"},
     {"key": "assignments", "label": "Назначения", "url": "/admin/assignments"},
-    {"key": "export", "label": "Экспорт"},
 ]
 
 TEACHER_NAVIGATION = [
@@ -107,10 +120,23 @@ def get_teacher_layout_context(active_teacher_nav: str) -> dict:
     }
 
 
-def get_student_layout_context(active_student_nav: str) -> dict:
+def get_student_layout_context(
+    active_student_nav: str,
+    selected_student_id: int | None = None,
+) -> dict:
+    student_navigation = STUDENT_NAVIGATION
+    if selected_student_id is not None:
+        student_navigation = [
+            {
+                **item,
+                "url": f"{item['url']}?student_id={selected_student_id}",
+            }
+            for item in STUDENT_NAVIGATION
+        ]
+
     return {
         "student_section": True,
-        "student_navigation": STUDENT_NAVIGATION,
+        "student_navigation": student_navigation,
         "active_student_nav": active_student_nav,
     }
 

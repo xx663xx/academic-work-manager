@@ -1,6 +1,8 @@
 from pathlib import Path
 
 from openpyxl import Workbook, load_workbook
+from openpyxl.styles import Alignment, Font, PatternFill
+from openpyxl.utils import get_column_letter
 
 from app.database import DB_PATH, get_assignments_for_export, get_connection, init_db
 
@@ -14,6 +16,23 @@ TEACHER_COLUMNS = [
     "Направление",
     "Контакт",
 ]
+STATUS_LABELS = {
+    "free": "свободно",
+    "pending": "ожидает подтверждения",
+    "confirmed": "подтверждено",
+    "rejected": "отказано",
+    "changed": "изменено",
+}
+EXPORT_COLUMN_WIDTHS = {
+    "A": 28,
+    "B": 12,
+    "C": 8,
+    "D": 18,
+    "E": 42,
+    "F": 28,
+    "G": 24,
+    "H": 20,
+}
 
 
 def read_rows(file_path, required_columns):
@@ -136,12 +155,36 @@ def export_assignments_to_excel(file_path, db_path=DB_PATH):
                 row["work_type"],
                 row["topic_title"],
                 row["teacher_name"],
-                row["status"],
+                STATUS_LABELS.get(row["status"], row["status"]),
                 row["updated_at"],
             ]
         )
 
+    format_assignments_sheet(sheet)
     workbook.save(file_path)
+
+
+def format_assignments_sheet(sheet):
+    header_fill = PatternFill("solid", fgColor="D9EAF7")
+    for cell in sheet[1]:
+        cell.font = Font(bold=True)
+        cell.fill = header_fill
+        cell.alignment = Alignment(vertical="center", wrap_text=True)
+
+    for column, width in EXPORT_COLUMN_WIDTHS.items():
+        sheet.column_dimensions[column].width = width
+
+    for row in sheet.iter_rows(min_row=2):
+        for cell in row:
+            cell.alignment = Alignment(vertical="top", wrap_text=True)
+
+    for column_index in (3,):
+        column = get_column_letter(column_index)
+        for cell in sheet[column]:
+            cell.alignment = Alignment(horizontal="center", vertical="top")
+
+    sheet.freeze_panes = "A2"
+    sheet.auto_filter.ref = sheet.dimensions
 
 
 def validate_students(rows):

@@ -1,4 +1,8 @@
-from fastapi import APIRouter, File, Form, Query, Request, UploadFile
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+
+from fastapi import APIRouter, BackgroundTasks, File, Form, Query, Request, UploadFile
+from fastapi.responses import FileResponse
 
 from app.database import (
     create_assignment,
@@ -8,7 +12,11 @@ from app.database import (
     get_work_types_for_course,
     init_db,
 )
-from app.excel_io import import_students_from_excel, import_teachers_from_excel
+from app.excel_io import (
+    export_assignments_to_excel,
+    import_students_from_excel,
+    import_teachers_from_excel,
+)
 from app.routes.shared import (
     get_admin_layout_context,
     render_dashboard,
@@ -24,6 +32,13 @@ router = APIRouter(prefix="/admin")
 STATUS_LABELS = {
     "free": "свободно",
     "pending": "ожидает подтверждения",
+    "confirmed": "подтверждено",
+    "rejected": "отказано",
+    "changed": "изменено",
+}
+STATUS_TABLE_LABELS = {
+    "free": "свободно",
+    "pending": "ожидает",
     "confirmed": "подтверждено",
     "rejected": "отказано",
     "changed": "изменено",
@@ -87,16 +102,55 @@ async def admin_teachers(request: Request):
 @router.get("/assignments")
 async def admin_assignments(request: Request):
     init_db()
+    assignments = add_status_labels(get_assignments())
     return templates.TemplateResponse(
         request,
         "index.html",
         {
             "admin_assignments": {
-                "assignments": add_status_labels(get_assignments()),
+                "assignments": assignments,
+                "assignments_count": len(assignments),
             },
             "roles": role_titles(),
             **get_admin_layout_context("assignments"),
         },
+    )
+
+
+@router.get("/export/download")
+async def admin_export_download(
+    request: Request,
+    background_tasks: BackgroundTasks,
+):
+    init_db()
+    with NamedTemporaryFile(delete=False, suffix=".xlsx") as temp_file:
+        export_path = Path(temp_file.name)
+
+    try:
+        export_assignments_to_excel(export_path)
+    except ValueError as error:
+        remove_file(export_path)
+        assignments = add_status_labels(get_assignments())
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "admin_assignments": {
+                    "assignments": assignments,
+                    "assignments_count": len(assignments),
+                    "error_message": str(error),
+                },
+                "roles": role_titles(),
+                **get_admin_layout_context("assignments"),
+            },
+        )
+
+    background_tasks.add_task(remove_file, export_path)
+    return FileResponse(
+        export_path,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        filename="academic_work_assignments.xlsx",
+        background=background_tasks,
     )
 
 
@@ -229,12 +283,20 @@ def add_status_labels(rows: list[dict]) -> list[dict]:
     labeled_rows = []
     for row in rows:
         labeled_row = dict(row)
-        labeled_row["status_label"] = STATUS_LABELS.get(
+        labeled_row["status_label"] = STATUS_TABLE_LABELS.get(
+            labeled_row["status"],
+            labeled_row["status"],
+        )
+        labeled_row["status_title"] = STATUS_LABELS.get(
             labeled_row["status"],
             labeled_row["status"],
         )
         labeled_rows.append(labeled_row)
     return labeled_rows
+
+
+def remove_file(file_path: Path) -> None:
+    file_path.unlink(missing_ok=True)
 
 
 @router.get("/import/students")
