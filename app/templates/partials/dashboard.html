@@ -1,0 +1,29 @@
+<section class="intro">
+  <h1>{{ dashboard.title }}</h1>
+  <p>{{ dashboard.description }}</p>
+  <p>
+    <a class="button secondary" href="/login">Сменить роль</a>
+  </p>
+</section>
+
+<section class="grid">
+  <article>
+    <h2>Доступные действия</h2>
+    <ul>
+      {% for action in dashboard.actions %}
+        <li>
+          {% if action.url %}
+            <a class="action-link" href="{{ action.url }}">{{ action.label }}</a>
+          {% else %}
+            {{ action.label }}
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article>
+    <h2>Статус раздела</h2>
+    <p>{{ dashboard.status }}</p>
+  </article>
+</section>

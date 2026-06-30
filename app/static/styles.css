@@ -1,3 +1,5 @@
+/* Base */
+
 * {
   box-sizing: border-box;
 }
@@ -13,6 +15,8 @@ body {
   background: #f5f7fa;
   font-family: Arial, sans-serif;
 }
+
+/* Topbar and brand */
 
 .topbar {
   display: flex;
@@ -64,6 +68,8 @@ body {
   text-align: center;
   text-decoration: none;
 }
+
+/* Main layouts and sidebar */
 
 .admin-layout {
   display: grid;
@@ -117,6 +123,8 @@ body {
   margin-bottom: 24px;
 }
 
+/* Typography */
+
 h1 {
   margin: 0 0 12px;
   font-size: 32px;
@@ -137,6 +145,8 @@ p {
   font-size: 14px;
 }
 
+/* Generic grids and cards */
+
 .grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -155,6 +165,8 @@ article {
   background: #ffffff;
   padding: 20px;
 }
+
+/* Buttons */
 
 .button {
   display: inline-block;
@@ -180,6 +192,8 @@ article {
   color: #475569;
   cursor: not-allowed;
 }
+
+/* Forms and assignment editor */
 
 .upload-form {
   display: grid;
@@ -308,6 +322,8 @@ article {
   flex-wrap: wrap;
 }
 
+/* Teacher topic cards */
+
 .teacher-topic-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -329,6 +345,8 @@ article {
   gap: 8px;
   margin-top: 14px;
 }
+
+/* Role screens and page headers */
 
 .student-screen {
   width: min(var(--workspace-width), 100%);
@@ -361,6 +379,8 @@ article {
 .topic-table {
   margin-top: 22px;
 }
+
+/* Admin assignments table */
 
 .admin-assignments-table table {
   min-width: 100%;
@@ -431,6 +451,8 @@ article {
   white-space: nowrap;
 }
 
+/* Teacher requests table */
+
 .teacher-requests-table th,
 .teacher-requests-table td {
   overflow-wrap: anywhere;
@@ -493,6 +515,8 @@ article {
   margin-bottom: 28px;
 }
 
+/* Status badges */
+
 .status-badge {
   display: inline-block;
   border-radius: 999px;
@@ -530,6 +554,8 @@ article {
   color: #5b21b6;
 }
 
+/* Inline actions */
+
 .table-button {
   border: 1px solid #cbd5e1;
   min-height: 36px;
@@ -559,6 +585,8 @@ article {
   border: 0;
   background: #079455;
 }
+
+/* Student assignment details */
 
 .student-assignment-card {
   width: min(720px, 100%);
@@ -590,6 +618,8 @@ article {
 .assignment-details dd {
   margin: 0;
 }
+
+/* Messages and danger zone */
 
 .message {
   border-radius: 6px;
@@ -630,6 +660,8 @@ article {
   color: #1e40af;
 }
 
+/* Base tables */
+
 .table-wrap {
   overflow-x: auto;
   border: 1px solid #d9dee7;
@@ -661,9 +693,13 @@ tr:last-child td {
   border-bottom: 0;
 }
 
+/* Lists */
+
 li + li {
   margin-top: 8px;
 }
+
+/* Responsive */
 
 @media (max-width: 720px) {
   .topbar {

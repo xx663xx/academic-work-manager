@@ -1,0 +1,76 @@
+<section class="assignment-screen">
+  <div class="page-heading">
+    <div>
+      <h1>Изменение темы</h1>
+      <p class="muted">
+        {{ teacher_topic_edit.current_teacher.full_name }} может изменить только свою свободную тему.
+      </p>
+    </div>
+    <div class="page-actions">
+      <a class="button secondary" href="/teacher/topics?teacher_id={{ teacher_topic_edit.current_teacher.id }}">К темам</a>
+    </div>
+  </div>
+
+  {% if teacher_topic_edit.success_message %}
+    <p class="message success">{{ teacher_topic_edit.success_message }}</p>
+  {% endif %}
+  {% if teacher_topic_edit.error_message %}
+    <p class="message error">{{ teacher_topic_edit.error_message }}</p>
+  {% endif %}
+
+  <article class="assignment-result">
+    <h2>{{ teacher_topic_edit.topic.title }}</h2>
+    <p>
+      Текущий статус:
+      <span class="status-badge status-{{ teacher_topic_edit.topic.status }}" title="{{ teacher_topic_edit.topic.status_title }}">
+        {{ teacher_topic_edit.topic.status_label }}
+      </span>
+    </p>
+  </article>
+
+  <form class="assignment-form assignment-form-wide" method="post">
+    <input type="hidden" name="teacher_id" value="{{ teacher_topic_edit.current_teacher.id }}">
+
+    <div class="field">
+      <label for="edit_topic_title">Название темы</label>
+      <textarea id="edit_topic_title" name="title" rows="3">{{ teacher_topic_edit.form_values.title or "" }}</textarea>
+    </div>
+
+    <div class="field">
+      <label for="edit_topic_work_type">Тип работы</label>
+      <select id="edit_topic_work_type" name="work_type">
+        {% for work_type in teacher_topic_edit.work_types %}
+          <option
+            value="{{ work_type }}"
+            {% if teacher_topic_edit.form_values.work_type == work_type %}selected{% endif %}
+          >
+            {{ work_type }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="edit_topic_description">Описание</label>
+      <textarea id="edit_topic_description" name="description" rows="3" placeholder="Краткое описание, если нужно">{{ teacher_topic_edit.form_values.description or "" }}</textarea>
+    </div>
+
+    <div class="assignment-form-actions">
+      <button class="button save-button" type="submit">Сохранить изменения</button>
+      <a class="button secondary" href="/teacher/topics?teacher_id={{ teacher_topic_edit.current_teacher.id }}">Отмена</a>
+    </div>
+  </form>
+
+  <section class="danger-zone">
+    <h2>Удаление темы</h2>
+    {% if teacher_topic_edit.can_delete %}
+      <p class="muted">Удалить можно только свободную тему без заявки студента.</p>
+      <form class="inline-form" method="post" action="/teacher/topics/{{ teacher_topic_edit.topic.id }}/delete">
+        <input type="hidden" name="teacher_id" value="{{ teacher_topic_edit.current_teacher.id }}">
+        <button class="button danger-button" type="submit">Удалить тему</button>
+      </form>
+    {% else %}
+      <p class="muted">Эта тема уже участвует в заявке или назначении, поэтому удалить ее из раздела преподавателя нельзя.</p>
+    {% endif %}
+  </section>
+</section>

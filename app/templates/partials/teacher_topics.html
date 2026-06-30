@@ -1,0 +1,89 @@
+<section class="assignment-screen">
+  <h1>Темы преподавателя</h1>
+
+  {% if teacher_topics.success_message %}
+    <p class="message success">{{ teacher_topics.success_message }}</p>
+  {% endif %}
+  {% if teacher_topics.error_message %}
+    <p class="message error">{{ teacher_topics.error_message }}</p>
+  {% endif %}
+
+  {% if teacher_topics.teachers %}
+    <form class="assignment-form student-picker" method="get">
+      <div class="field">
+        <label for="teacher_id">Преподаватель</label>
+        <select id="teacher_id" name="teacher_id" onchange="this.form.submit()">
+          {% for teacher in teacher_topics.teachers %}
+            <option
+              value="{{ teacher.id }}"
+              {% if teacher_topics.current_teacher and teacher_topics.current_teacher.id == teacher.id %}selected{% endif %}
+            >
+              {{ teacher.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  {% endif %}
+
+  <form class="assignment-form assignment-form-wide" method="post">
+    {% if teacher_topics.current_teacher %}
+      <input type="hidden" name="teacher_id" value="{{ teacher_topics.current_teacher.id }}">
+    {% endif %}
+
+    <div class="field">
+      <label for="title">Название темы</label>
+      <textarea id="title" name="title" rows="3" placeholder="Введите тему">{{ teacher_topics.form_values.title or "" }}</textarea>
+    </div>
+
+    <div class="field">
+      <label for="work_type">Тип работы</label>
+      <select id="work_type" name="work_type">
+        <option value="">Выберите тип работы</option>
+        {% for work_type in teacher_topics.work_types %}
+          <option
+            value="{{ work_type }}"
+            {% if teacher_topics.form_values.work_type == work_type %}selected{% endif %}
+          >
+            {{ work_type }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field">
+      <label for="description">Описание</label>
+      <textarea id="description" name="description" rows="3" placeholder="Краткое описание, если нужно">{{ teacher_topics.form_values.description or "" }}</textarea>
+    </div>
+
+    <button class="button save-button" type="submit">
+      Добавить тему
+    </button>
+  </form>
+
+  <section class="teacher-topic-list">
+    <h2>Список моих тем</h2>
+    {% if teacher_topics.topics %}
+      {% for topic in teacher_topics.topics %}
+        <article>
+          <h2>{{ topic.title }}</h2>
+          <p>Тип работы: {{ topic.work_type }}</p>
+          <p>Статус: <span class="status-badge status-{{ topic.status }}">{{ topic.status_label }}</span></p>
+          <p>{{ topic.description or "Описание не заполнено." }}</p>
+          <div class="topic-card-actions">
+            {% if topic.status == "free" %}
+              <a class="button secondary table-button" href="/teacher/topics/{{ topic.id }}/edit?teacher_id={{ teacher_topics.current_teacher.id }}">Изменить</a>
+            {% else %}
+              <span class="muted">Занята</span>
+            {% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    {% else %}
+      <article>
+        <h2>Тем пока нет</h2>
+        <p>Добавленные темы появятся здесь.</p>
+      </article>
+    {% endif %}
+  </section>
+</section>

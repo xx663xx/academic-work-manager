@@ -1,0 +1,48 @@
+<section class="assignment-screen">
+  <h1>Импорт</h1>
+  <p class="muted">
+    Загрузите справочники студентов и преподавателей из Excel-файлов.
+  </p>
+
+  <section class="grid">
+    {% for option in admin_import.options %}
+      <article>
+        <h2>{{ option.title }}</h2>
+        <p>{{ option.description }}</p>
+        <p>
+          <a class="button" href="{{ option.url }}">Загрузить Excel</a>
+        </p>
+      </article>
+    {% endfor %}
+  </section>
+
+  <section class="danger-zone">
+    <h2>Опасная зона</h2>
+    <p class="muted">
+      Очистка нужна только перед повторным импортом данных.
+    </p>
+
+    {% if admin_import.success_message %}
+      <p class="message success">{{ admin_import.success_message }}</p>
+    {% endif %}
+    {% if admin_import.error_message %}
+      <p class="message error">{{ admin_import.error_message }}</p>
+    {% endif %}
+
+    <form class="assignment-form assignment-form-wide" method="post" action="/admin/import/clear">
+      <p>
+        Будут удалены студенты, преподаватели, темы, назначения и история.
+        После этого нужно заново импортировать Excel-файлы.
+      </p>
+
+      <div class="field">
+        <label for="confirmation">Подтверждение</label>
+        <input id="confirmation" name="confirmation" type="text" placeholder="Введите ОЧИСТИТЬ">
+      </div>
+
+      <button class="button danger-button" type="submit">
+        Очистить базу данных
+      </button>
+    </form>
+  </section>
+</section>

@@ -1,0 +1,76 @@
+<section class="assignment-screen admin-assignments-screen">
+  <div class="page-heading">
+    <div>
+      <h1>Назначения</h1>
+      <p class="muted">
+        Итоговый список выбранных и назначенных тем.
+        Записей для выгрузки: {{ admin_assignments.assignments_count }}.
+      </p>
+    </div>
+    <div class="page-actions">
+      {% if admin_assignments.assignments_count %}
+        <a class="button secondary" href="/admin/export/download">Скачать Excel</a>
+      {% endif %}
+      <a class="button" href="/admin/assignments/new">Создать назначение</a>
+    </div>
+  </div>
+
+  {% if admin_assignments.error_message %}
+    <p class="message error">{{ admin_assignments.error_message }}</p>
+  {% endif %}
+
+  {% if admin_assignments.assignments %}
+    <div class="table-wrap topic-table admin-assignments-table">
+      <table>
+        <colgroup>
+          <col class="assignment-col-student">
+          <col class="assignment-col-group">
+          <col class="assignment-col-course">
+          <col class="assignment-col-work-type">
+          <col class="assignment-col-topic">
+          <col class="assignment-col-teacher">
+          <col class="assignment-col-status">
+          <col class="assignment-col-action">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <th>Группа</th>
+            <th>Курс</th>
+            <th>Тип работы</th>
+            <th>Тема</th>
+            <th>Руководитель</th>
+            <th>Статус</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for assignment in admin_assignments.assignments %}
+            <tr>
+              <td>{{ assignment.student_name }}</td>
+              <td>{{ assignment.study_group }}</td>
+              <td>{{ assignment.course }}</td>
+              <td>{{ assignment.work_type }}</td>
+              <td>{{ assignment.topic_title }}</td>
+              <td>{{ assignment.teacher_name }}</td>
+              <td>
+                <span class="status-badge status-{{ assignment.status }}" title="{{ assignment.status_title }}">{{ assignment.status_label }}</span>
+              </td>
+              <td>
+                <a class="button secondary table-button" href="/admin/assignments/{{ assignment.id }}/edit" title="Изменить назначение">Изм.</a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <article class="student-assignment-card">
+      <h2>Назначений пока нет</h2>
+      <p>После выбора темы студентом или ручного назначения администратором записи появятся здесь.</p>
+      <p>
+        <a class="button" href="/admin/assignments/new">Создать назначение</a>
+      </p>
+    </article>
+  {% endif %}
+</section>

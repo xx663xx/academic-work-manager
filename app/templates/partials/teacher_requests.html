@@ -1,0 +1,85 @@
+<section class="assignment-screen student-screen">
+  <h1>Заявки студентов</h1>
+
+  {% if teacher_requests.success_message %}
+    <p class="message success">{{ teacher_requests.success_message }}</p>
+  {% endif %}
+  {% if teacher_requests.error_message %}
+    <p class="message error">{{ teacher_requests.error_message }}</p>
+  {% endif %}
+
+  {% if teacher_requests.current_teacher %}
+    <form class="assignment-form student-picker" method="get">
+      <div class="field">
+        <label for="teacher_id">Преподаватель</label>
+        <select id="teacher_id" name="teacher_id" onchange="this.form.submit()">
+          {% for teacher in teacher_requests.teachers %}
+            <option
+              value="{{ teacher.id }}"
+              {% if teacher_requests.current_teacher and teacher_requests.current_teacher.id == teacher.id %}selected{% endif %}
+            >
+              {{ teacher.full_name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  {% endif %}
+
+  {% if teacher_requests.requests %}
+    <div class="table-wrap topic-table teacher-requests-table">
+      <table>
+        <colgroup>
+          <col class="request-col-student">
+          <col class="request-col-group">
+          <col class="request-col-topic">
+          <col class="request-col-work-type">
+          <col class="request-col-status">
+          <col class="request-col-action">
+        </colgroup>
+        <thead>
+          <tr>
+            <th>Студент</th>
+            <th>Группа</th>
+            <th>Тема</th>
+            <th>Тип работы</th>
+            <th>Статус</th>
+            <th>Действие</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for request_item in teacher_requests.requests %}
+            <tr>
+              <td>{{ request_item.student_name }}</td>
+              <td>{{ request_item.study_group }}</td>
+              <td>{{ request_item.topic_title }}</td>
+              <td>{{ request_item.work_type }}</td>
+              <td>
+                <span class="status-badge status-{{ request_item.status }}" title="{{ request_item.status_title }}">{{ request_item.status_label }}</span>
+              </td>
+              <td class="request-action-cell">
+                {% if request_item.status == "pending" %}
+                  <div class="request-actions">
+                    <form method="post" action="/teacher/requests/{{ request_item.assignment_id }}/confirm?teacher_id={{ teacher_requests.current_teacher.id }}">
+                      <button class="button table-button confirm-button" type="submit">Подтвердить</button>
+                    </form>
+                    <form method="post" action="/teacher/requests/{{ request_item.assignment_id }}/reject?teacher_id={{ teacher_requests.current_teacher.id }}">
+                      <button class="button secondary table-button" type="submit">Отклонить</button>
+                    </form>
+                  </div>
+                {% else %}
+                  <span class="muted">Обработана</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <article class="student-assignment-card">
+      <h2>Заявок пока нет</h2>
+      <p>Когда студент выберет тему этого преподавателя, заявка появится здесь.</p>
+    </article>
+  {% endif %}
+</section>

@@ -1,0 +1,121 @@
+<section class="assignment-screen student-screen">
+  {% if student_workspace.success_message %}
+    <p class="message success">{{ student_workspace.success_message }}</p>
+  {% endif %}
+  {% if student_workspace.error_message %}
+    <p class="message error">{{ student_workspace.error_message }}</p>
+  {% endif %}
+
+  {% if student_workspace.students %}
+    <form class="assignment-form student-picker" method="get">
+      <div class="field">
+        <label for="student_id">Студент</label>
+        <select id="student_id" name="student_id" onchange="this.form.submit()">
+          {% for student in student_workspace.students %}
+            <option
+              value="{{ student.id }}"
+              {% if student_workspace.selected_student and student_workspace.selected_student.id == student.id %}selected{% endif %}
+            >
+              {{ student.full_name }} ({{ student.study_group }}, {{ student.course }} курс)
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+  {% endif %}
+
+  {% if student_workspace.active_tab == "topics" %}
+    <h1>Доступные темы</h1>
+
+    {% if student_workspace.assignment %}
+      <article class="student-assignment-card">
+        <h2>Тема уже выбрана</h2>
+        <p>{{ student_workspace.assignment.topic_title }}</p>
+        <p>
+          <a class="button" href="/student/assignment?student_id={{ student_workspace.selected_student.id }}">Открыть мою тему</a>
+        </p>
+      </article>
+    {% elif student_workspace.topics %}
+      <div class="table-wrap topic-table">
+        <table>
+          <thead>
+            <tr>
+              <th>Тема</th>
+              <th>Тип работы</th>
+              <th>Руководитель</th>
+              <th>Статус</th>
+              <th>Действие</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for topic in student_workspace.topics %}
+              <tr>
+                <td>{{ topic.title }}</td>
+                <td>{{ topic.work_type }}</td>
+                <td>{{ topic.teacher_name }}</td>
+                <td>
+                  <span class="status-badge status-{{ topic.status }}">{{ topic.status_label }}</span>
+                </td>
+                <td>
+                  <form method="post" class="inline-form">
+                    <input type="hidden" name="student_id" value="{{ student_workspace.selected_student.id }}">
+                    <input type="hidden" name="topic_id" value="{{ topic.id }}">
+                    <button class="button secondary table-button" type="submit">
+                      Выбрать
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <article class="student-assignment-card">
+        <h2>Подходящих тем пока нет</h2>
+        <p>После добавления свободных тем преподавателем они появятся в этом списке.</p>
+      </article>
+    {% endif %}
+  {% elif student_workspace.active_tab == "assignment" %}
+    <h1>Моя тема</h1>
+
+    {% if student_workspace.assignment %}
+      <article class="student-assignment-card">
+        <p class="muted">
+          {{ student_workspace.assignment.student_name }},
+          {{ student_workspace.assignment.study_group }},
+          {{ student_workspace.assignment.course }} курс
+        </p>
+        <h2>{{ student_workspace.assignment.topic_title }}</h2>
+        <dl class="assignment-details">
+          <div>
+            <dt>Тип работы</dt>
+            <dd>{{ student_workspace.assignment.work_type }}</dd>
+          </div>
+          <div>
+            <dt>Руководитель</dt>
+            <dd>{{ student_workspace.assignment.teacher_name }}</dd>
+          </div>
+          <div>
+            <dt>Статус</dt>
+            <dd>
+              <span class="status-badge status-{{ student_workspace.assignment.status }}">{{ student_workspace.assignment.status_label }}</span>
+            </dd>
+          </div>
+        </dl>
+      </article>
+    {% else %}
+      <article class="student-assignment-card">
+        <h2>Тема пока не выбрана</h2>
+        <p>После выбора темы информация о руководителе и статусе появится здесь.</p>
+        <p>
+          {% if student_workspace.selected_student %}
+            <a class="button" href="/student/topics?student_id={{ student_workspace.selected_student.id }}">Перейти к доступным темам</a>
+          {% else %}
+            <a class="button" href="/student/topics">Перейти к доступным темам</a>
+          {% endif %}
+        </p>
+      </article>
+    {% endif %}
+  {% endif %}
+</section>

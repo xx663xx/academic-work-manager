@@ -1,0 +1,31 @@
+<section class="intro">
+  <h1>Назначение тем студентам</h1>
+  <p>
+    Приложение помогает загрузить студентов и преподавателей, распределить
+    темы между студентами 3 и 4 курса, согласовать выбор с преподавателем и
+    выгрузить итоговые назначения в Excel.
+  </p>
+  <p>
+    <a class="button" href="/login">Перейти к выбору роли</a>
+  </p>
+</section>
+
+<section class="grid">
+  <article>
+    <h2>Роли MVP</h2>
+    <ul>
+      {% for role in roles %}
+        <li>{{ role }}</li>
+      {% endfor %}
+    </ul>
+  </article>
+
+  <article>
+    <h2>Следующие шаги</h2>
+    <ol>
+      {% for step in next_steps %}
+        <li>{{ step }}</li>
+      {% endfor %}
+    </ol>
+  </article>
+</section>
