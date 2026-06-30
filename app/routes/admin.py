@@ -7,11 +7,13 @@ from fastapi.responses import FileResponse
 from app.database import (
     clear_all_data,
     create_assignment,
+    get_assignment,
     get_assignments,
     get_students,
     get_teachers,
     get_work_types_for_course,
     init_db,
+    update_assignment,
 )
 from app.excel_io import (
     export_assignments_to_excel,
@@ -44,6 +46,12 @@ STATUS_TABLE_LABELS = {
     "rejected": "отказано",
     "changed": "изменено",
 }
+STATUS_OPTIONS = [
+    ("pending", "ожидает подтверждения"),
+    ("confirmed", "подтверждено"),
+    ("rejected", "отказано"),
+    ("changed", "изменено"),
+]
 
 
 @router.get("")
@@ -290,6 +298,104 @@ async def admin_create_assignment(
     )
 
 
+@router.get("/assignments/{assignment_id}/edit")
+async def admin_edit_assignment(
+    request: Request,
+    assignment_id: int,
+):
+    assignment = get_assignment(assignment_id)
+    if assignment is None:
+        assignments = add_status_labels(get_assignments())
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "admin_assignments": {
+                    "assignments": assignments,
+                    "assignments_count": len(assignments),
+                    "error_message": "Назначение не найдено.",
+                },
+                "roles": role_titles(),
+                **get_admin_layout_context("assignments"),
+            },
+        )
+
+    return render_assignment_edit_form(request, assignment=assignment)
+
+
+@router.post("/assignments/{assignment_id}/edit")
+async def admin_update_assignment(
+    request: Request,
+    assignment_id: int,
+    teacher_id: str = Form(""),
+    topic_title: str = Form(""),
+    work_type: str = Form(""),
+    status: str = Form(""),
+    comment: str = Form(""),
+):
+    selected_teacher_id = parse_optional_int(teacher_id)
+    current_assignment = get_assignment(assignment_id)
+    if current_assignment is None:
+        assignments = add_status_labels(get_assignments())
+        return templates.TemplateResponse(
+            request,
+            "index.html",
+            {
+                "admin_assignments": {
+                    "assignments": assignments,
+                    "assignments_count": len(assignments),
+                    "error_message": "Назначение не найдено.",
+                },
+                "roles": role_titles(),
+                **get_admin_layout_context("assignments"),
+            },
+        )
+    if selected_teacher_id is None:
+        return render_assignment_edit_form(
+            request,
+            assignment=current_assignment,
+            error_message="Выберите преподавателя.",
+            form_values={
+                "teacher_id": selected_teacher_id,
+                "topic_title": topic_title,
+                "work_type": work_type,
+                "status": status,
+                "comment": comment,
+            },
+        )
+
+    try:
+        assignment = update_assignment(
+            assignment_id,
+            teacher_id=selected_teacher_id,
+            topic_title=topic_title,
+            work_type=work_type,
+            status=status,
+            comment=comment,
+            changed_by="admin",
+            reason="Администратор изменил назначение",
+        )
+    except ValueError as error:
+        return render_assignment_edit_form(
+            request,
+            assignment=current_assignment,
+            error_message=str(error),
+            form_values={
+                "teacher_id": selected_teacher_id,
+                "topic_title": topic_title,
+                "work_type": work_type,
+                "status": status,
+                "comment": comment,
+            },
+        )
+
+    return render_assignment_edit_form(
+        request,
+        assignment=assignment,
+        success_message="Назначение обновлено.",
+    )
+
+
 def render_assignment_form(
     request: Request,
     *,
@@ -325,6 +431,43 @@ def render_assignment_form(
                 "error_message": error_message,
                 "assignment_result": assignment_result,
                 "values": form_values or {},
+            },
+            "roles": role_titles(),
+            **get_admin_layout_context("assignments"),
+        },
+    )
+
+
+def render_assignment_edit_form(
+    request: Request,
+    *,
+    assignment: dict,
+    success_message: str = "",
+    error_message: str = "",
+    form_values: dict | None = None,
+):
+    init_db()
+    values = form_values or {
+        "teacher_id": assignment["teacher_id"],
+        "topic_title": assignment["topic_title"],
+        "work_type": assignment["work_type"],
+        "status": assignment["status"],
+        "comment": assignment["comment"],
+    }
+    work_types = get_work_types_for_course(assignment["course"])
+
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "admin_assignment_edit": {
+                "assignment": add_status_labels([assignment])[0],
+                "teachers": get_teachers(),
+                "work_types": work_types,
+                "statuses": STATUS_OPTIONS,
+                "success_message": success_message,
+                "error_message": error_message,
+                "form_values": values,
             },
             "roles": role_titles(),
             **get_admin_layout_context("assignments"),

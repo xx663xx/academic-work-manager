@@ -249,6 +249,62 @@ def get_topic(topic_id, db_path=DB_PATH):
     return dict(row) if row else None
 
 
+def update_topic(
+    topic_id,
+    *,
+    teacher_id,
+    title,
+    work_type,
+    description="",
+    db_path=DB_PATH,
+):
+    init_db(db_path)
+    title = _normalize_required_text(title, "Название темы не может быть пустым")
+    work_type = _normalize_topic_work_type(work_type)
+    description = _clean_optional_text(description)
+
+    with get_connection(db_path) as connection:
+        topic = _get_topic_row(connection, topic_id)
+        if topic is None:
+            raise ValueError("Тема не найдена")
+        if topic["teacher_id"] != teacher_id:
+            raise ValueError("Можно изменить только свою тему")
+        if topic["status"] != "free":
+            raise ValueError("Можно изменить только свободную тему")
+
+        connection.execute(
+            """
+            UPDATE topics
+            SET title = ?, work_type = ?, description = ?
+            WHERE id = ?
+            """,
+            (title, work_type, description, topic_id),
+        )
+
+    return get_topic(topic_id, db_path)
+
+
+def delete_topic(topic_id, *, teacher_id, db_path=DB_PATH):
+    init_db(db_path)
+    with get_connection(db_path) as connection:
+        topic = _get_topic_row(connection, topic_id)
+        if topic is None:
+            raise ValueError("Тема не найдена")
+        if topic["teacher_id"] != teacher_id:
+            raise ValueError("Можно удалить только свою тему")
+        if topic["status"] != "free":
+            raise ValueError("Можно удалить только свободную тему")
+
+        linked_assignment = connection.execute(
+            "SELECT id FROM assignments WHERE topic_id = ?",
+            (topic_id,),
+        ).fetchone()
+        if linked_assignment:
+            raise ValueError("Нельзя удалить тему, связанную с назначением")
+
+        connection.execute("DELETE FROM topics WHERE id = ?", (topic_id,))
+
+
 def get_teacher_topics(teacher_id, db_path=DB_PATH):
     init_db(db_path)
     with get_connection(db_path) as connection:

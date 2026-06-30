@@ -42,7 +42,7 @@ DASHBOARDS = {
             {"label": "Просмотр преподавателей", "url": "/admin/teachers"},
             {"label": "Просмотр назначений", "url": "/admin/assignments"},
             {"label": "Назначить тему студенту", "url": "/admin/assignments/new"},
-            {"label": "Изменение темы или руководителя"},
+            {"label": "Изменение темы или руководителя", "url": "/admin/assignments"},
             {"label": "Настройка сроков и блокировок"},
             {"label": "Экспорт результата в Excel", "url": "/admin/assignments"},
         ],

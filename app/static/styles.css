@@ -301,6 +301,13 @@ article {
   opacity: 0.55;
 }
 
+.assignment-form-actions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
 .teacher-topic-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -315,6 +322,12 @@ article {
 
 .teacher-topic-list article + article {
   margin-top: 0;
+}
+
+.topic-card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
 }
 
 .student-screen {
@@ -361,7 +374,7 @@ article {
 }
 
 .assignment-col-student {
-  width: 23%;
+  width: 20%;
 }
 
 .assignment-col-group {
@@ -377,15 +390,19 @@ article {
 }
 
 .assignment-col-topic {
-  width: 23%;
+  width: 22%;
 }
 
 .assignment-col-status {
-  width: 13%;
+  width: 11%;
 }
 
 .assignment-col-teacher {
-  width: 17%;
+  width: 16%;
+}
+
+.assignment-col-action {
+  width: 7%;
 }
 
 .admin-assignments-table th:nth-child(2),
@@ -400,6 +417,17 @@ article {
   justify-content: center;
   line-height: 1.25;
   text-align: center;
+  white-space: nowrap;
+}
+
+.admin-assignments-table th:nth-child(8),
+.admin-assignments-table td:nth-child(8) {
+  overflow-wrap: normal;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.admin-assignments-table td:nth-child(8) .table-button {
   white-space: nowrap;
 }
 

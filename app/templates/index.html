@@ -161,7 +161,7 @@
 
         <div class="field">
           <label for="title">Название темы</label>
-          <textarea id="title" name="title" rows="3" placeholder="Введите тему">{{ teacher_topics.values.title or "" }}</textarea>
+          <textarea id="title" name="title" rows="3" placeholder="Введите тему">{{ teacher_topics.form_values.title or "" }}</textarea>
         </div>
 
         <div class="field">
@@ -171,7 +171,7 @@
             {% for work_type in teacher_topics.work_types %}
               <option
                 value="{{ work_type }}"
-                {% if teacher_topics.values.work_type == work_type %}selected{% endif %}
+                {% if teacher_topics.form_values.work_type == work_type %}selected{% endif %}
               >
                 {{ work_type }}
               </option>
@@ -181,7 +181,7 @@
 
         <div class="field">
           <label for="description">Описание</label>
-          <textarea id="description" name="description" rows="3" placeholder="Краткое описание, если нужно">{{ teacher_topics.values.description or "" }}</textarea>
+          <textarea id="description" name="description" rows="3" placeholder="Краткое описание, если нужно">{{ teacher_topics.form_values.description or "" }}</textarea>
         </div>
 
         <button class="button save-button" type="submit">
@@ -198,6 +198,13 @@
               <p>Тип работы: {{ topic.work_type }}</p>
               <p>Статус: <span class="status-badge status-{{ topic.status }}">{{ topic.status_label }}</span></p>
               <p>{{ topic.description or "Описание не заполнено." }}</p>
+              <div class="topic-card-actions">
+                {% if topic.status == "free" %}
+                  <a class="button secondary table-button" href="/teacher/topics/{{ topic.id }}/edit?teacher_id={{ teacher_topics.current_teacher.id }}">Изменить</a>
+                {% else %}
+                  <span class="muted">Занята</span>
+                {% endif %}
+              </div>
             </article>
           {% endfor %}
         {% else %}
@@ -205,6 +212,83 @@
             <h2>Тем пока нет</h2>
             <p>Добавленные темы появятся здесь.</p>
           </article>
+        {% endif %}
+      </section>
+    </section>
+  {% elif teacher_topic_edit %}
+    <section class="assignment-screen">
+      <div class="page-heading">
+        <div>
+          <h1>Изменение темы</h1>
+          <p class="muted">
+            {{ teacher_topic_edit.current_teacher.full_name }} может изменить только свою свободную тему.
+          </p>
+        </div>
+        <div class="page-actions">
+          <a class="button secondary" href="/teacher/topics?teacher_id={{ teacher_topic_edit.current_teacher.id }}">К темам</a>
+        </div>
+      </div>
+
+      {% if teacher_topic_edit.success_message %}
+        <p class="message success">{{ teacher_topic_edit.success_message }}</p>
+      {% endif %}
+      {% if teacher_topic_edit.error_message %}
+        <p class="message error">{{ teacher_topic_edit.error_message }}</p>
+      {% endif %}
+
+      <article class="assignment-result">
+        <h2>{{ teacher_topic_edit.topic.title }}</h2>
+        <p>
+          Текущий статус:
+          <span class="status-badge status-{{ teacher_topic_edit.topic.status }}" title="{{ teacher_topic_edit.topic.status_title }}">
+            {{ teacher_topic_edit.topic.status_label }}
+          </span>
+        </p>
+      </article>
+
+      <form class="assignment-form assignment-form-wide" method="post">
+        <input type="hidden" name="teacher_id" value="{{ teacher_topic_edit.current_teacher.id }}">
+
+        <div class="field">
+          <label for="edit_topic_title">Название темы</label>
+          <textarea id="edit_topic_title" name="title" rows="3">{{ teacher_topic_edit.form_values.title or "" }}</textarea>
+        </div>
+
+        <div class="field">
+          <label for="edit_topic_work_type">Тип работы</label>
+          <select id="edit_topic_work_type" name="work_type">
+            {% for work_type in teacher_topic_edit.work_types %}
+              <option
+                value="{{ work_type }}"
+                {% if teacher_topic_edit.form_values.work_type == work_type %}selected{% endif %}
+              >
+                {{ work_type }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="edit_topic_description">Описание</label>
+          <textarea id="edit_topic_description" name="description" rows="3" placeholder="Краткое описание, если нужно">{{ teacher_topic_edit.form_values.description or "" }}</textarea>
+        </div>
+
+        <div class="assignment-form-actions">
+          <button class="button save-button" type="submit">Сохранить изменения</button>
+          <a class="button secondary" href="/teacher/topics?teacher_id={{ teacher_topic_edit.current_teacher.id }}">Отмена</a>
+        </div>
+      </form>
+
+      <section class="danger-zone">
+        <h2>Удаление темы</h2>
+        {% if teacher_topic_edit.can_delete %}
+          <p class="muted">Удалить можно только свободную тему без заявки студента.</p>
+          <form class="inline-form" method="post" action="/teacher/topics/{{ teacher_topic_edit.topic.id }}/delete">
+            <input type="hidden" name="teacher_id" value="{{ teacher_topic_edit.current_teacher.id }}">
+            <button class="button danger-button" type="submit">Удалить тему</button>
+          </form>
+        {% else %}
+          <p class="muted">Эта тема уже участвует в заявке или назначении, поэтому удалить ее из раздела преподавателя нельзя.</p>
         {% endif %}
       </section>
     </section>
@@ -327,6 +411,7 @@
               <col class="assignment-col-topic">
               <col class="assignment-col-teacher">
               <col class="assignment-col-status">
+              <col class="assignment-col-action">
             </colgroup>
             <thead>
               <tr>
@@ -337,6 +422,7 @@
                 <th>Тема</th>
                 <th>Руководитель</th>
                 <th>Статус</th>
+                <th>Действие</th>
               </tr>
             </thead>
             <tbody>
@@ -350,6 +436,9 @@
                   <td>{{ assignment.teacher_name }}</td>
                   <td>
                     <span class="status-badge status-{{ assignment.status }}" title="{{ assignment.status_title }}">{{ assignment.status_label }}</span>
+                  </td>
+                  <td>
+                    <a class="button secondary table-button" href="/admin/assignments/{{ assignment.id }}/edit" title="Изменить назначение">Изм.</a>
                   </td>
                 </tr>
               {% endfor %}
@@ -414,6 +503,109 @@
           </button>
         </form>
       </section>
+    </section>
+  {% elif admin_assignment_edit %}
+    <section class="assignment-screen">
+      <div class="page-heading">
+        <div>
+          <h1>Изменение назначения</h1>
+          <p class="muted">
+            Администратор может исправить тему, руководителя, тип работы, статус и комментарий.
+          </p>
+        </div>
+        <div class="page-actions">
+          <a class="button secondary" href="/admin/assignments">К списку</a>
+        </div>
+      </div>
+
+      {% if admin_assignment_edit.success_message %}
+        <p class="message success">{{ admin_assignment_edit.success_message }}</p>
+      {% endif %}
+      {% if admin_assignment_edit.error_message %}
+        <p class="message error">{{ admin_assignment_edit.error_message }}</p>
+      {% endif %}
+
+      <article class="assignment-result">
+        <h2>{{ admin_assignment_edit.assignment.student_name }}</h2>
+        <p>
+          {{ admin_assignment_edit.assignment.study_group }},
+          {{ admin_assignment_edit.assignment.course }} курс.
+          Текущий статус:
+          <span class="status-badge status-{{ admin_assignment_edit.assignment.status }}" title="{{ admin_assignment_edit.assignment.status_title }}">
+            {{ admin_assignment_edit.assignment.status_label }}
+          </span>
+        </p>
+      </article>
+
+      <form class="assignment-form assignment-form-wide" method="post">
+        <div class="field">
+          <label for="edit_work_type">Тип работы</label>
+          {% if admin_assignment_edit.work_types|length > 1 %}
+            <select id="edit_work_type" name="work_type">
+              {% for work_type in admin_assignment_edit.work_types %}
+                <option
+                  value="{{ work_type }}"
+                  {% if admin_assignment_edit.form_values.work_type == work_type %}selected{% endif %}
+                >
+                  {{ work_type }}
+                </option>
+              {% endfor %}
+            </select>
+          {% else %}
+            <input
+              id="edit_work_type"
+              name="work_type"
+              type="text"
+              value="{{ admin_assignment_edit.form_values.work_type or admin_assignment_edit.work_types[0] }}"
+              readonly
+            >
+          {% endif %}
+        </div>
+
+        <div class="field">
+          <label for="edit_topic_title">Тема</label>
+          <textarea id="edit_topic_title" name="topic_title" rows="3">{{ admin_assignment_edit.form_values.topic_title or "" }}</textarea>
+        </div>
+
+        <div class="field">
+          <label for="edit_teacher_id">Руководитель</label>
+          <select id="edit_teacher_id" name="teacher_id">
+            <option value="">Выберите преподавателя</option>
+            {% for teacher in admin_assignment_edit.teachers %}
+              <option
+                value="{{ teacher.id }}"
+                {% if admin_assignment_edit.form_values.teacher_id == teacher.id %}selected{% endif %}
+              >
+                {{ teacher.full_name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="edit_status">Статус</label>
+          <select id="edit_status" name="status">
+            {% for status_value, status_label in admin_assignment_edit.statuses %}
+              <option
+                value="{{ status_value }}"
+                {% if admin_assignment_edit.form_values.status == status_value %}selected{% endif %}
+              >
+                {{ status_label }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field">
+          <label for="edit_comment">Комментарий</label>
+          <textarea id="edit_comment" name="comment" rows="3" placeholder="Причина или служебная заметка">{{ admin_assignment_edit.form_values.comment or "" }}</textarea>
+        </div>
+
+        <div class="assignment-form-actions">
+          <button class="button save-button" type="submit">Сохранить изменения</button>
+          <a class="button secondary" href="/admin/assignments">Отмена</a>
+        </div>
+      </form>
     </section>
   {% elif assignment_form %}
     <section class="assignment-screen">

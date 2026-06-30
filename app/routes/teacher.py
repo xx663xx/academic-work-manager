@@ -4,10 +4,13 @@ from starlette.responses import RedirectResponse
 from app.database import (
     confirm_topic_request,
     create_topic,
+    delete_topic,
+    get_topic,
     get_teacher_topic_requests,
     get_teacher_topics,
     get_teachers,
     reject_topic_request,
+    update_topic,
 )
 from app.routes.shared import (
     get_teacher_layout_context,
@@ -145,6 +148,12 @@ def render_teacher_topics(
     error_message: str = "",
     form_values: dict | None = None,
 ):
+    success_code = request.query_params.get("success")
+    if success_code == "topic_updated":
+        success_message = "Тема обновлена."
+    if success_code == "topic_deleted":
+        success_message = "Тема удалена."
+
     teachers = get_teachers()
     current_teacher = get_current_teacher(selected_teacher_id, teachers)
     topics = []
@@ -169,13 +178,186 @@ def render_teacher_topics(
                 "current_teacher": current_teacher,
                 "success_message": success_message,
                 "error_message": error_message,
-                "values": form_values or {},
+                "form_values": form_values or {},
             },
             "roles": role_titles(),
             **get_teacher_layout_context(
                 "topics",
                 current_teacher["id"] if current_teacher else None,
             ),
+        },
+    )
+
+
+@router.get("/topics/{topic_id}/edit")
+async def teacher_edit_topic(
+    request: Request,
+    topic_id: int,
+    teacher_id: int | None = Query(default=None),
+):
+    current_teacher = get_current_teacher(teacher_id)
+    if current_teacher is None:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=teacher_id,
+            error_message="Сначала выберите преподавателя.",
+        )
+
+    topic = get_topic(topic_id)
+    if topic is None:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=current_teacher["id"],
+            error_message="Тема не найдена.",
+        )
+    if topic["teacher_id"] != current_teacher["id"]:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=current_teacher["id"],
+            error_message="Можно редактировать только свои темы.",
+        )
+
+    return render_teacher_topic_edit(
+        request,
+        current_teacher=current_teacher,
+        topic=topic,
+    )
+
+
+@router.post("/topics/{topic_id}/edit")
+async def teacher_update_topic(
+    request: Request,
+    topic_id: int,
+    teacher_id: str = Form(""),
+    title: str = Form(""),
+    work_type: str = Form(""),
+    description: str = Form(""),
+):
+    selected_teacher_id = parse_optional_int(teacher_id)
+    current_teacher = get_current_teacher(selected_teacher_id)
+    topic = get_topic(topic_id)
+    if current_teacher is None:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=selected_teacher_id,
+            error_message="Сначала выберите преподавателя.",
+        )
+    if topic is None:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=current_teacher["id"],
+            error_message="Тема не найдена.",
+        )
+    if topic["teacher_id"] != current_teacher["id"]:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=current_teacher["id"],
+            error_message="Можно редактировать только свои темы.",
+        )
+
+    try:
+        update_topic(
+            topic_id,
+            teacher_id=current_teacher["id"],
+            title=title,
+            work_type=work_type,
+            description=description,
+        )
+    except ValueError as error:
+        return render_teacher_topic_edit(
+            request,
+            current_teacher=current_teacher,
+            topic=topic,
+            error_message=str(error),
+            form_values={
+                "title": title,
+                "work_type": work_type,
+                "description": description,
+            },
+        )
+
+    return RedirectResponse(
+        url=build_teacher_redirect_url(
+            "/teacher/topics",
+            current_teacher["id"],
+            success="topic_updated",
+        ),
+        status_code=303,
+    )
+
+
+@router.post("/topics/{topic_id}/delete")
+async def teacher_delete_topic(
+    request: Request,
+    topic_id: int,
+    teacher_id: str = Form(""),
+):
+    selected_teacher_id = parse_optional_int(teacher_id)
+    current_teacher = get_current_teacher(selected_teacher_id)
+    topic = get_topic(topic_id)
+    if current_teacher is None:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=selected_teacher_id,
+            error_message="Сначала выберите преподавателя.",
+        )
+    if topic is None:
+        return render_teacher_topics(
+            request,
+            selected_teacher_id=current_teacher["id"],
+            error_message="Тема не найдена.",
+        )
+
+    try:
+        delete_topic(topic_id, teacher_id=current_teacher["id"])
+    except ValueError as error:
+        return render_teacher_topic_edit(
+            request,
+            current_teacher=current_teacher,
+            topic=topic,
+            error_message=str(error),
+        )
+
+    return RedirectResponse(
+        url=build_teacher_redirect_url(
+            "/teacher/topics",
+            current_teacher["id"],
+            success="topic_deleted",
+        ),
+        status_code=303,
+    )
+
+
+def render_teacher_topic_edit(
+    request: Request,
+    *,
+    current_teacher: dict,
+    topic: dict,
+    success_message: str = "",
+    error_message: str = "",
+    form_values: dict | None = None,
+):
+    values = form_values or {
+        "title": topic["title"],
+        "work_type": topic["work_type"],
+        "description": topic["description"],
+    }
+
+    return templates.TemplateResponse(
+        request,
+        "index.html",
+        {
+            "teacher_topic_edit": {
+                "topic": add_status_labels([topic])[0],
+                "current_teacher": current_teacher,
+                "work_types": TOPIC_WORK_TYPES,
+                "success_message": success_message,
+                "error_message": error_message,
+                "form_values": values,
+                "can_delete": topic["status"] == "free",
+            },
+            "roles": role_titles(),
+            **get_teacher_layout_context("topics", current_teacher["id"]),
         },
     )
 
