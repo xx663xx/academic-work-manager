@@ -355,6 +355,7 @@ article {
 
 .admin-assignments-screen {
   width: min(var(--workspace-width), 100%);
+  min-width: 0;
 }
 
 .page-heading {
@@ -383,13 +384,14 @@ article {
 /* Admin assignments table */
 
 .admin-assignments-table table {
-  min-width: 100%;
-  table-layout: fixed;
+  min-width: 1180px;
+  table-layout: auto;
 }
 
 .admin-assignments-table th,
 .admin-assignments-table td {
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   white-space: normal;
 }
 
@@ -455,15 +457,16 @@ article {
 
 .teacher-requests-table th,
 .teacher-requests-table td {
-  overflow-wrap: anywhere;
+  overflow-wrap: normal;
+  word-break: normal;
   white-space: normal;
   padding-left: 16px;
   padding-right: 16px;
 }
 
 .teacher-requests-table table {
-  min-width: 100%;
-  table-layout: fixed;
+  min-width: 1040px;
+  table-layout: auto;
 }
 
 .request-col-student {
